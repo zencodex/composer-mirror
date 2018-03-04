@@ -1,0 +1,10 @@
+cache/*
+!cache/index.php
+dist/
+logs
+vendor
+config.php
+packagist.tar.bz2
+optimize.db
+optimized
+.idea
