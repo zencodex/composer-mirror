@@ -1,0 +1,38 @@
+{
+    "name": "zencodex/packagist-crawler",
+    "description": "build mirror of packagist.org",
+    "license": "CC0-1.0",
+    "authors": [
+        {
+            "name": "ZenCodex",
+            "email": "v@yinqisen.cn"
+        }
+    ],
+    "require": {
+        "upyun/sdk": "dev-master",
+        "qxsch/worker-pool": "^1.5",
+        "guiguiboy/php-cli-progress-bar": "dev-master",
+        "php": ">=5.6",
+        "ext-json": "*",
+        "ext-hash": "*",
+        "ext-curl": "*",
+        "ext-PDO": "*",
+        "ext-zlib": "*",
+        "ext-pdo_sqlite": "*",
+        "amphp/amp": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "zencodex\\PackagistCrawler\\": "src/"
+        }
+    },
+    "bin": [
+        "parallel.php"
+    ],
+    "scripts": {
+        "crawl": "php parallel.php",
+        "test": "php check.php",
+        "compress": "tar cjf packagist.tar.bz2 cache/",
+        "sync": "rsync -avz --include=cache/index.php --include=vendor --exclude-from=.gitignore ./ root@linodejp:/home/zencodex/packagist-crawler/"
+    }
+}
