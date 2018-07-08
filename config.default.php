@@ -11,6 +11,8 @@ return (object)[
     //'cachedir' => '/usr/local/apache2/htdocs/',
     'packagistUrl' => 'https://packagist.org',
     'mirrorUrl' => 'https://packagist.laravel-china.org',
+    'distUrl' => 'https://dl.laravel-china.org/',
+
     'lockfile' => __DIR__ . '/cache/.lock',
     'expiredDb' => __DIR__ . '/cache/.expired.db',
     'maxConnections' => 200,
@@ -19,6 +21,7 @@ return (object)[
     'url' => 'http://localhost',
 
     'cloudsync' => false,
+    'isPrefetch' => false,
     'timeout' => 6000,   // guzzle timeout
     'upyun' => (object)[
         'operator' => 'composer',
@@ -28,5 +31,4 @@ return (object)[
             'zip' => 'mirror-dist',
         ],
     ],
-    'distUrl' => 'https://dl.laravel-china.org/',
 ];

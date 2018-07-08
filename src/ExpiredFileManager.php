@@ -45,6 +45,7 @@ class ExpiredFileManager
 
     function __destruct()
     {
+        Log::warn('DONE => sqlite transaction committed');
         $this->pdo->commit();
         $this->pdo->exec('VACUUM');
     }

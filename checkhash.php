@@ -6,15 +6,8 @@
  * Time: 11:49 AM
  */
 
-use zencodex\PackagistCrawler\Cloud;
+use zencodex\PackagistCrawler\FileUtils;
+require_once __DIR__ . '/src/lib/init.php';
 
-require_once __DIR__ . '/vendor/autoload.php';
-
-if (file_exists(__DIR__ . '/config.php')) {
-    $config = require __DIR__ . '/config.php';
-} else {
-    $config = require __DIR__ . '/config.default.php';
-}
-
-$cloud = new Cloud($config);
-$cloud->badCountOfAllPackages();
+$fileUtils = new FileUtils($config);
+$fileUtils->badCountOfAllPackages();

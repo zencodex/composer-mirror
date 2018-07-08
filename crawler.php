@@ -7,22 +7,11 @@ use GuzzleHttp\RequestOptions;
 use ProgressBar\Manager as ProgressBarManager;
 use zencodex\PackagistCrawler\Cloud;
 use zencodex\PackagistCrawler\ExpiredFileManager;
+use zencodex\PackagistCrawler\FileUtils;
 use zencodex\PackagistCrawler\Log;
-use function Amp\asyncCall;
+use Pheanstalk\Pheanstalk;
 
-require_once __DIR__ . '/vendor/autoload.php';
-
-if (file_exists(__DIR__ . '/config.php')) {
-    $config = require __DIR__ . '/config.php';
-} else {
-    $config = require __DIR__ . '/config.default.php';
-}
-
-declare(ticks = 1);
-@exec('ulimit -n 10000');
-ini_set('memory_limit', '1G');
-set_time_limit($config->timeout);
-putenv("GUZZLE_CURL_SELECT_TIMEOUT=" . $config->timeout);
+require_once __DIR__ . '/src/lib/init.php';
 
 //if (file_exists($config->lockfile)) {
 //    throw new \RuntimeException("$config->lockfile exists");
@@ -39,13 +28,21 @@ file_exists($config->distdir) or mkdir($config->distdir, 0777, true);
 //    unlink($config->lockfile);
 //});
 
-/////////////////////////////////////////////////////////////////////////////////////////
-
+/*
+|--------------------------------------------------------------------------
+| 全局变量
+|--------------------------------------------------------------------------
+*/
 $globals = new \stdClass;
 $globals->q = new \SplQueue;
+$globals->timestamp = time();
 $globals->expiredManager = new ExpiredFileManager($config->expiredDb, $config->expireMinutes);
 $globals->terminated = 0;
 $globals->cloud = new Cloud($config);
+
+// 初始化 producer
+$clientHandler = new Pheanstalk('127.0.0.1');
+$clientHandler->useTube('composer');
 
 set_exception_handler(function (Throwable $ex) use ($globals) {
     unset($globals->expiredManager);
@@ -62,29 +59,33 @@ pcntl_signal(SIGINT, $signal_handler);  // Ctrl + C
 pcntl_signal(SIGCHLD, $signal_handler);
 pcntl_signal(SIGTSTP, $signal_handler);  // Ctrl + Z
 
-do {
-//    $globals->terminated and exit();
-//    $globals->retry = false;
+/*
+|--------------------------------------------------------------------------
+| Main()
+|--------------------------------------------------------------------------
+|
+| 核心采集代码
+*/
 
-    // STEP 1
-    $providers = downloadProviders($config);
-//    if ($globals->retry) continue;
+// STEP 1
+$providers = downloadProviders($config);
+$fileUtils = new FileUtils($config);
+if ($fileUtils->badCountOfProviderPackages() !== 0) {
+    throw new RuntimeException('!!! flushFiles => packages.json.new 存在错误，跳过更新 !!!');
+}
 
-    // STEP 2
-    $jsonfiles = downloadPackages($config, $providers);
-//    if ($globals->retry) continue;
+// STEP 2
+$jsonfiles = downloadPackages($config, $providers);
 
-    // STEP 3
-    downloadZipballs($config, $jsonfiles);
-//    if ($globals->retry) continue;
+// STEP 3
+downloadZipballs($config, $jsonfiles);
 
-//} while ($globals->retry);
-} while (0);
-
+// STEP 4
 flushFiles($config);
+unset($globals->expiredManager);
 
-Log::warn("wait for 120s....");
-sleep(120);
+//Log::warn("wait for 120s....");
+//sleep(120);
 exit;
 
 /**
@@ -99,7 +100,7 @@ function downloadProviders($config)
     $packages = json_decode(request($config->packagistUrl . '/packages.json'));
     foreach (explode(' ', 'notify notify-batch search') as $k) {
         if (0 === strpos($packages->$k, '/')) {
-            $packages->$k = 'https://packagist.org' . $packages->$k;
+            $packages->$k = $config->packagistUrl . $packages->$k;
         }
     }
     file_put_contents($packagesCache . '.new', json_encode($packages));
@@ -130,14 +131,15 @@ function downloadProviders($config)
                         $globals->expiredManager->add($old, time());
                     }
                 }
-                storeFile($cachename, $data);
 
-                if ($config->cloudsync) {
-                    $globals->cloud->pushOneFile($cachename);
-                }
+                storeFile($cachename, $data);
+                $config->cloudsync and pushJob2Task($cachename);
             } else {
                 $globals->retry = true;
             }
+        } else {
+            // Just update filetime
+            touchFile($cachename);
         }
 
         $progressBar->advance();
@@ -179,7 +181,11 @@ function downloadPackages($config, $providers)
             $url = "$config->packagistUrl/p/$packageName\$$provider->sha256.json";
             $cachefile = $cachedir . str_replace("$config->packagistUrl/", '', $url);
 
-            if (file_exists($cachefile)) continue;
+            if (file_exists($cachefile)) {
+                touchFile($cachefile);
+                continue;
+            }
+
             $packageObjs[] = (object)[
                 'packageName' => $packageName,
                 'url' => $url,
@@ -199,6 +205,8 @@ function downloadPackages($config, $providers)
     foreach ($arrChuncks as $chunk) {
         $requests = [];
         foreach ($chunk as $package) {
+            $globals->terminated and exit();
+
             $req = new Request('GET', $package->url);
             $req->sha256 = $package->sha256;
             $req->packageName = $package->packageName;
@@ -234,7 +242,7 @@ function downloadPackages($config, $providers)
                 //                storeFile($cachefile2, (string)$res->getBody());
 
                 if ($config->cloudsync) {
-                    $globals->cloud->pushOneFile($cachefile);
+                    pushJob2Task($cachefile);
                 }
             },
             'rejected' => function ($reason, $index) use (&$requests, &$progressBar) {
@@ -262,69 +270,132 @@ function downloadZipballs($config, $jsonfiles)
 
         foreach ($packageData['packages'] as $packageName => $versions) {
             foreach ($versions as $verNumber => $vMeta) {
-                asyncCall(function () use ($verNumber, $vMeta, $packageName) {
-                    global $globals, $config;
+                global $globals, $config;
+                $globals->terminated and exit();
 
-                    // 废弃的包 dist url 为null，跳过不处理
-                    // bananeapocalypse/nuitinfo2013api
-                    // This package is abandoned and no longer maintained. No replacement package was suggested.
+                // 废弃的包 dist url 为null，跳过不处理
+                // bananeapocalypse/nuitinfo2013api
+                // This package is abandoned and no longer maintained. No replacement package was suggested.
 
-                    if (!$vMeta['dist']['url']) {
-                        Log::error('发现异常包，跳过: ' . $vMeta['dist']['url']);
-                    }
+                if (!$vMeta['dist']['url']) {
+                    Log::error('发现异常包，跳过: ' . $vMeta['dist']['url']);
+                    continue;
+                }
 
-                    // 保存 github/bitbucket ... 真实对应下载地址
-                    $zipFile = $config->distdir . $packageName . '/' . $vMeta['dist']['reference'] . '.zip';
-                    if (!file_exists($zipFile)) {
-                        storeFile($zipFile, $vMeta['dist']['url']);
-                        $config->cloudsync and $globals->cloud->prefetchDistFile($zipFile);
-                    }
-                });
+                // 保存 github/bitbucket ... 真实对应下载地址
+                $zipFile = $config->distdir . $packageName . '/' . $vMeta['dist']['reference'] . '.zip';
+                if (!file_exists($zipFile)) {
+                    storeFile($zipFile, $vMeta['dist']['url']);
+                    if (!$config->cloudsync) continue;
+                    pushJob2Task($zipFile);
+//                    $config->isPrefetch ? $globals->cloud->prefetchDistFile($zipFile) : $globals->cloud->pushOneFile($zipFile);
+                }
             }
         }
     }
 }
 
+/**
+ * 推送异步任务到 beanstalk
+ * @param $data
+ * @param string $method
+ * @param int $delay
+ */
+function pushJob2Task($data, $method='pushOneFile', $delay = 0)
+{
+    global $clientHandler;
+    $clientHandler->put(
+        json_encode([
+            'method' => $method,
+            'data' => $data
+        ]),
+        23,      // Give the job a priority of 23.
+        $delay,  // Do not wait to put job into the ready queue.
+        0        // Give the job 1 minute to run.
+    );
+}
+
+/**
+ * 更新 packages.json
+ * @param $config
+ */
 function flushFiles($config)
 {
     global $globals;
-    if ($globals->cloud->badCountOfProviderPackages() == 0) {
-        $cachedir = $config->cachedir;
-        $packages = json_decode(file_get_contents($cachedir.'packages.json.new'));
-        $packages->mirrors = [
-            [
-                'dist-url' => $config->distUrl . '%package%/%reference%.%type%',
-                'preferred' => true,
-            ]
-        ];
-        $packages->update_at = date('Y-m-d H:i:s');
-        file_put_contents($config->cachedir . 'packages.json', json_encode($packages));
+    $cachedir = $config->cachedir;
+    $packages = json_decode(file_get_contents($cachedir.'packages.json.new'));
+    $packages->mirrors = [
+        [
+            'dist-url' => $config->distUrl . '%package%/%reference%.%type%',
+            'preferred' => true,
+        ]
+    ];
 
-        if ($config->cloudsync) {
-            $globals->cloud->pushOneFile($config->cachedir . 'packages.json');
-            $globals->cloud->refreshRemoteFile($config->mirrorUrl . '/packages.json');
-            generateHtml($config, $packages->update_at);
+    $packages->update_at = date('Y-m-d H:i:s', $globals->timestamp);
+    file_put_contents($config->cachedir . 'packages.json', json_encode($packages));
+
+    unlink($config->cachedir . 'packages.json.new');
+    generateHtml($config, $packages->update_at);
+
+    $config->cloudsync and pushJob2Task($config->cachedir . 'packages.json');
+    Log::debug('finished! flushFiles...');
+}
+
+/**
+ * 检测文件的hash值
+ * @param $file
+ */
+function checkHashOfFile($file)
+{
+    // validate file hash
+    if (($startpos = strpos($file, '$')) !== false) {
+        $aHash = substr($file, $startpos + 1, 64);
+        $bHash = hash('sha256', file_get_contents($file));
+        if ($aHash !== $bHash) {
+            global $config, $globals;
+            unlink($file);
+
+            // remove remote json file
+            if ($config->cloudsync) {
+                $globals->cloud->removeRemoteFile($file);
+            }
+
+            throw new \RuntimeException("签名错误!!! $aHash : $bHash, $file");
         }
-        unlink($config->cachedir . 'packages.json.new');
-        Log::debug('finished! flushing...');
-    } else {
-        Log::error('!!! update error !!!');
     }
 }
 
+/**
+ * 保存文件
+ * @param $file
+ * @param $data
+ */
 function storeFile($file, $data)
 {
     if (!file_exists(dirname($file))) {
         mkdir(dirname($file), 0777, true);
     }
+
     file_put_contents($file, $data, LOCK_EX);
+    checkHashOfFile($file);
+}
+
+/**
+ * 更新文件的修改和访问时间
+ * @param $file
+ */
+function touchFile($file)
+{
+    global $globals;
+    checkHashOfFile($file);
+    touch($file, $globals->timestamp, $globals->timestamp);
 }
 
 function request($url)
 {
     global $config;
     try {
-        $client = new Client([ RequestOptions::TIMEOUT => $config->timeout]);
+        $client = new Client([RequestOptions::TIMEOUT => $config->timeout]);
         $res = $client->get($url);
         return (string)$res->getBody();
     } catch (\Exception $e) {
@@ -333,10 +404,9 @@ function request($url)
     }
 }
 
-function generateHtml($_config, $time)
+function generateHtml($_config, $update_at)
 {
     ob_start();
-    $update_at = $time;
     include __DIR__ . '/index.html.php';
     file_put_contents($_config->cachedir . '/index.html', ob_get_clean());
 }

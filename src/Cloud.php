@@ -23,6 +23,19 @@ class Cloud
         $this->client = new Upyun( $this->bucketConfig() );
     }
 
+    private function bucketConfig($ext = 'zip')
+    {
+        $bucketConfig = new Config(
+            $this->config->upyun->bucket->$ext,
+            $this->config->upyun->operator,
+            $this->config->upyun->password
+        );
+
+        $bucketConfig->timeout = $this->config->timeout;
+        $bucketConfig->sizeBoundary = 121457280;
+        return $bucketConfig;
+    }
+
     // 将文件上传到 又拍云
     public function pushOneFile($file)
     {
@@ -31,15 +44,18 @@ class Cloud
             throw new \RuntimeException('pushOneFile, Not found => ' . $file);
         }
 
+        // default value for return
+        $ret = -1;
+
         if (count($this->lastUpload) > 1000) {
             $this->lastUpload = [];
         }
 
         // fix issue: {"msg":"too many requests of the same uri","code":42900002 }
         // sleep to wait
-        if (isset($this->lastUpload[$file]) && (time() - intval($this->lastUpload[$file]) < 10)) {
+        if (isset($this->lastUpload[$file]) && (time() - intval($this->lastUpload[$file]) < 20)) {
             Log::warn('wait 10s, workaround => too many requests of the same uri');
-            sleep(10);
+            sleep(20);
         }
 
         $ext = pathinfo($file, PATHINFO_EXTENSION);
@@ -55,15 +71,14 @@ class Cloud
             } catch (\Exception $e) {
                 Log::error('pushOneFile '. $file .' => github/xxxx error!!!');
                 Log::error($e->getMessage());
-                unlink($tmpfile);
-                return -2;
+                goto __END__;
             }
         } else if ($ext == 'json') {
             $start = strlen($this->config->cachedir);
             $uri = substr($file, $start);
             $tmpfile = $file;
         } else {
-            return -3;
+            throw new \RuntimeException("不支持的文件扩展 $ext");
         }
 
         try {
@@ -72,11 +87,14 @@ class Cloud
             $this->client->setConfig($this->bucketConfig($ext));
             $this->client->write($uri, $f);
             Log::info('pushOneFile success => '. $file);
-            return 1;
+            $ret = 1;
         } catch (\Exception $e) {
             Log::error("pushOneFile => $file \n" . $e->getMessage());
-            return -1;
         }
+
+    __END__:
+        $ext == 'zip' and unlink($tmpfile);
+        return $ret;
     }
 
     public function prefetchDistFile($zipFile)
@@ -100,19 +118,6 @@ class Cloud
         } catch (\Exception $e) {
             Log::error('prefetchDistFile => '. $e->getMessage());
         }
-    }
-
-    private function bucketConfig($ext = 'zip')
-    {
-        $bucketConfig = new Config(
-            $this->config->upyun->bucket->$ext,
-            $this->config->upyun->operator,
-            $this->config->upyun->password
-        );
-
-        $bucketConfig->timeout = $this->config->timeout;
-        $bucketConfig->sizeBoundary = 121457280; // 70M
-        return $bucketConfig;
     }
 
     public function removeRemoteFile($file)
@@ -149,65 +154,5 @@ class Cloud
         } catch (\Exception $e) {
             Log::error('refreshCdnCache => '. $e->getMessage());
         }
-    }
-
-    /**
-     * check sha256
-     */
-    function badCountOfAllPackages()
-    {
-        Log::info('------------- ' . __FUNCTION__ . ' -------------');
-
-        $cachedir = $this->config->cachedir;
-        $packagejson = json_decode(file_get_contents($cachedir.'packages.json'));
-
-        $i = $j = 0;
-        foreach ($packagejson->{'provider-includes'} as $tpl => $provider) {
-            $providerjson = str_replace('%hash%', $provider->sha256, $tpl);
-            $packages = json_decode(file_get_contents($cachedir.$providerjson));
-
-            foreach ($packages->providers as $tpl2 => $sha) {
-                $file = $cachedir . "p/$tpl2\$$sha->sha256.json";
-                if (!file_exists($file)) {
-                    Log::error('LOST FILE => ' . $file);
-                    ++$i;
-                } elseif ($sha->sha256 !== hash_file('sha256', $file)) {
-                    Log::error('HASH ERROR => ' . $file);
-                    ++$i;
-                    unlink($file);
-                } else {
-                    ++$j;
-                }
-            }
-        }
-
-        Log::info($i . ' / ' . ($i + $j));
-        return $i;
-    }
-
-    function badCountOfProviderPackages()
-    {
-        Log::info('------------- ' . __FUNCTION__ . ' -------------');
-        $cachedir = $this->config->cachedir;
-        $packagejson = json_decode(file_get_contents($cachedir.'packages.json.new'));
-
-        $i = $j = 0;
-        foreach ($packagejson->{'provider-includes'} as $tpl => $provider) {
-            $providerjson = str_replace('%hash%', $provider->sha256, $tpl);
-            $file = $cachedir.$providerjson;
-            if (!file_exists($file)) {
-                Log::error('LOST FILE => ' . $file);
-                ++$i;
-            } elseif ($provider->sha256 !== hash_file('sha256', $file)) {
-                Log::error('HASH ERROR => ' . $file);
-                ++$i;
-                unlink($file);
-            } else {
-                ++$j;
-            }
-        }
-
-        Log::info($i . ' / ' . ($i + $j));
-        return $i;
     }
 }

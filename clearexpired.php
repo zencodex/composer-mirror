@@ -10,17 +10,9 @@ use ProgressBar\Manager as ProgressBarManager;
 use zencodex\PackagistCrawler\Cloud;
 use zencodex\PackagistCrawler\ExpiredFileManager;
 use zencodex\PackagistCrawler\Log;
+use Symfony\Component\Finder\Finder;
 
-set_time_limit(0);
-ini_set('memory_limit', '1G');
-
-require_once __DIR__ . '/vendor/autoload.php';
-
-if (file_exists(__DIR__ . '/config.php')) {
-    $config = require __DIR__ . '/config.php';
-} else {
-    $config = require __DIR__ . '/config.default.php';
-}
+require_once __DIR__ . '/src/lib/init.php';
 
 $config->cloudsync or Log::warn('NOTE: WOULD NOT SYNC TO CLOUD');
 $expiredManager = new ExpiredFileManager($config->expiredDb, $config->expireMinutes);
@@ -34,7 +26,8 @@ pcntl_signal(SIGINT, $signal_handler);  // Ctrl + C
 pcntl_signal(SIGCHLD, $signal_handler);
 pcntl_signal(SIGTSTP, $signal_handler);  // Ctrl + Z
 
-clearExpiredFiles($expiredManager);
+clearOutdatedFiles($config);
+//clearExpiredFiles($expiredManager);
 
 function clearExpiredFiles(ExpiredFileManager $expiredManager)
 {
@@ -77,5 +70,37 @@ function clearExpiredFiles(ExpiredFileManager $expiredManager)
             $cloud->removeRemoteFile($file);
         }
         $progressBar->advance();
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| 根据文件的更新时间判断
+|--------------------------------------------------------------------------
+*/
+
+function clearOutdatedFiles($config)
+{
+    $cloud = new Cloud($config);
+    $packages = json_decode(file_get_contents($config->cachedir . '/packages.json'));
+    $basetime = strtotime($packages->update_at);
+
+    $finder = new Finder();
+    $finder->files()->in($config->cachedir . '/p');
+
+    foreach ($finder as $fileObj) {
+        $file = $fileObj->getRealPath();
+        // skip "p/provider-xxx%hash%.json
+//        if (strpos($file, '/p/provider-')) continue;
+
+        if ($basetime - filemtime($file) > $config->expireMinutes * 60) {
+            unlink($file);
+            // remove remote json file
+            if ($config->cloudsync) {
+                $cloud->removeRemoteFile($file);
+            }
+            Log::warn("removed file => $file");
+        }
     }
 }
