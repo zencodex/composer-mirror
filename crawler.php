@@ -94,8 +94,8 @@ downloadZipballs($config, $jsonfiles);
 flushFiles($config);
 //unset($globals->expiredManager);
 
-//Log::warn("wait for 120s....");
-//sleep(120);
+Log::warn("wait for 60s....");
+sleep(60);
 exit;
 
 /**
@@ -178,15 +178,15 @@ function downloadPackages($config, $providers)
         $list = $list->providers;
         $all = count((array)$list);
 
-        $progressBar = new ProgressBarManager(0, $all);
+//        $progressBar = new ProgressBarManager(0, $all);
         echo "   - Provider {$i}/{$numberOfProviders}:\n";
-        $progressBar->setFormat("      - Package: %current%/%max% [%bar%] %percent%%");
+//        $progressBar->setFormat("      - Package: %current%/%max% [%bar%] %percent%%");
 
         $sum = 0;
         foreach ($list as $packageName => $provider) {
             $globals->terminated and exit();
 
-            $progressBar->advance();
+//            $progressBar->advance();
             ++$sum;
             $url = "$config->packagistUrl/p/$packageName\$$provider->sha256.json";
             $cachefile = $cachedir . str_replace("$config->packagistUrl/", '', $url);
@@ -248,6 +248,7 @@ function downloadPackages($config, $providers)
 //                        $globals->expiredManager->add($old, time());
 //                    }
 //                }
+
                 storeFile($cachefile, (string)$res->getBody());
                 //                storeFile($cachefile2, (string)$res->getBody());
 
@@ -345,7 +346,6 @@ function flushFiles($config)
     file_put_contents($config->cachedir . 'packages.json', json_encode($packages));
 
     unlink($config->cachedir . 'packages.json.new');
-    generateHtml($config, $packages->update_at);
 
     $config->cloudsync and pushJob2Task($config->cachedir . 'packages.json');
     Log::debug('finished! flushFiles...');
@@ -398,7 +398,7 @@ function storeFile($file, $data)
 function touchFile($file)
 {
     global $globals;
-    checkHashOfFile($file);
+//    checkHashOfFile($file);
     touch($file, $globals->timestamp, $globals->timestamp);
 }
 
@@ -415,9 +415,3 @@ function request($url)
     }
 }
 
-function generateHtml($_config, $update_at)
-{
-    ob_start();
-    include __DIR__ . '/index.html.php';
-    file_put_contents($_config->cachedir . '/index.html', ob_get_clean());
-}

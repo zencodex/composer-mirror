@@ -34,6 +34,6 @@
         "crawl": "php crawler.php",
         "test": "php check.php",
         "compress": "tar cjf packagist.tar.bz2 cache/",
-        "sync": "rsync -avz --include=cache/index.php --include=vendor --exclude-from=.gitignore ./ root@linodejp:/home/zencodex/packagist-crawler/"
+        "sync": "rsync -rvz --include=cache/index.php --include=vendor --exclude-from=.gitignore ./ root@linodejp:/home/zencodex/packagist-crawler/"
     }
 }

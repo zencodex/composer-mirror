@@ -105,5 +105,20 @@ function processMainPackageFile($jobData)
         if ($result > 0) {
             $cloud->refreshRemoteFile($config->mirrorUrl . '/packages.json');
         }
+
+        $packages = json_decode(file_get_contents($config->cachedir . 'packages.json'));
+        generateHtml($config, $packages->update_at);
     }
+}
+
+/**
+ * 更新说明文档
+ * @param $_config
+ * @param $update_at
+ */
+function generateHtml($_config, $update_at)
+{
+    ob_start();
+    include __DIR__ . '/index.html.php';
+    file_put_contents($_config->cachedir . '/index.html', ob_get_clean());
 }
