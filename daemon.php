@@ -15,16 +15,12 @@ use zencodex\PackagistCrawler\Log;
 
 require_once __DIR__ . '/src/lib/init.php';
 
-// 约定大约配置，直接传入调用的方法 和 参数
-$beanstalk = new Pheanstalk('127.0.0.1');
-$beanstalk->watch('composer');
-
 $cloud = new Cloud($config);
 $wp = new WorkerPool();
 $wp->setWorkerPoolSize(10)->create(new ClosureWorker (
 
-    function ($input, $semaphone, $storage) use (&$beanstalk, $cloud) {
-        $cloud->{$input->method}($input->data);
+    function ($jobData, $semaphone, $storage) use (&$beanstalk, $cloud) {
+        $cloud->{$jobData->method}($jobData->data);
     }
 ));
 
@@ -37,6 +33,10 @@ $wp->setWorkerPoolSize(10)->create(new ClosureWorker (
 //        pcntl_signal(SIGINT, $signal_handler);  // Ctrl + C
 //        pcntl_signal(SIGCHLD, $signal_handler);
 //        pcntl_signal(SIGTSTP, $signal_handler);  // Ctrl + Z
+
+// 约定大约配置，直接传入调用的方法 和 参数
+$beanstalk = new Pheanstalk('127.0.0.1');
+$beanstalk->watch('composer');
 
 $stats = $beanstalk->stats();
 Log::info('current-jobs-ready => ' . $stats['current-jobs-ready']);
@@ -53,12 +53,17 @@ while (1) {
 
     // 只处理最后一个 packages.json，其余的多进程处理
     if (isMainPackageFile($jobData)) {
-        processMainPackageFile($job, $jobData);
+        processMainPackageFile($jobData);
     } else {
         $wp->run($jobData);
+//        $cloud->{$jobData->method}($jobData->data);
     }
 
-    $beanstalk->delete($job);
+    try {
+        $beanstalk->delete($job);
+    } catch (Exception $e) {
+        // Noting to do
+    }
 }
 
 Log::info("DONE!");
@@ -76,7 +81,7 @@ function isMainPackageFile($jobData)
 /**
  * 特殊处理 packages.json
  */
-function processMainPackageFile($job, $jobData)
+function processMainPackageFile($jobData)
 {
     global $wp, $beanstalk, $cloud, $config;
 
@@ -100,8 +105,5 @@ function processMainPackageFile($job, $jobData)
         if ($result > 0) {
             $cloud->refreshRemoteFile($config->mirrorUrl . '/packages.json');
         }
-        $beanstalk->delete($job);
     }
-
-    $beanstalk->delete($job);
 }

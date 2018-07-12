@@ -36,9 +36,38 @@ class Cloud
         return $bucketConfig;
     }
 
+    private function pickFileInfo($file)
+    {
+        $ext = pathinfo($file, PATHINFO_EXTENSION);
+        if ($ext == 'zip') {
+            $start = strlen($this->config->distdir);
+            $uri = substr($file, $start);
+            $postUrl = file_get_contents($file);
+
+            $tmpfile = tempnam(null, 'composer_');
+            try {
+                $downloader = new Client([ RequestOptions::TIMEOUT => $this->config->timeout ]);
+                $downloader->get($postUrl, ['sink' => $tmpfile]);
+            } catch (\Exception $e) {
+                Log::error('pushOneFile '. $file .' => github/xxxx error!!!');
+                Log::error($e->getMessage());
+                $tmpfile = '';
+            }
+        } else if ($ext == 'json') {
+            $start = strlen($this->config->cachedir);
+            $uri = substr($file, $start);
+            $tmpfile = $file;
+        } else {
+            throw new \RuntimeException("不支持的文件扩展 $ext");
+        }
+
+        return [$ext, $uri, $tmpfile];
+    }
+
     // 将文件上传到 又拍云
     public function pushOneFile($file)
     {
+        Log::info($file);
         if (!file_exists($file)) {
             unset($this->globals->expiredManager);
             throw new \RuntimeException('pushOneFile, Not found => ' . $file);
@@ -46,7 +75,6 @@ class Cloud
 
         // default value for return
         $ret = -1;
-
         if (count($this->lastUpload) > 1000) {
             $this->lastUpload = [];
         }
@@ -58,34 +86,16 @@ class Cloud
             sleep(20);
         }
 
-        $ext = pathinfo($file, PATHINFO_EXTENSION);
-        if ($ext == 'zip') {
-            $start = strlen($this->config->distdir);
-            $uri = substr($file, $start);
-            $postUrl = file_get_contents($file);
-
-            $tmpfile = tempnam(null, null);
-            try {
-                $downloader = new Client([ RequestOptions::TIMEOUT => $this->config->timeout ]);
-                $downloader->get($postUrl, [ 'sink' => $tmpfile ]);
-            } catch (\Exception $e) {
-                Log::error('pushOneFile '. $file .' => github/xxxx error!!!');
-                Log::error($e->getMessage());
-                goto __END__;
-            }
-        } else if ($ext == 'json') {
-            $start = strlen($this->config->cachedir);
-            $uri = substr($file, $start);
-            $tmpfile = $file;
-        } else {
-            throw new \RuntimeException("不支持的文件扩展 $ext");
-        }
+        [$ext, $uri, $tmpfile] = $this->pickFileInfo($file);
+        if (empty($tmpfile)) goto __END__;
 
         try {
-            $f = fopen($tmpfile, 'rb');
             // 上传到又拍云
             $this->client->setConfig($this->bucketConfig($ext));
+
+            $f = fopen($tmpfile, 'rb');
             $this->client->write($uri, $f);
+//            $this->client->write($uri, file_get_contents($tmpfile));
             Log::info('pushOneFile success => '. $file);
             $ret = 1;
         } catch (\Exception $e) {
@@ -93,7 +103,7 @@ class Cloud
         }
 
     __END__:
-        $ext == 'zip' and unlink($tmpfile);
+        $ext == 'zip' and $tmpfile and unlink($tmpfile);
         return $ret;
     }
 
@@ -150,7 +160,7 @@ class Cloud
 //        $client = new Upyun( $this->bucketConfig() );
         try {
             $result = $this->client->purge($remoteUrl);
-            Log::debug("refreshCdnCache => $remoteUrl \n". json_encode($result));
+            Log::debug("refreshCdnCache => $remoteUrl \n");
         } catch (\Exception $e) {
             Log::error('refreshCdnCache => '. $e->getMessage());
         }

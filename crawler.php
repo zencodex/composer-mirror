@@ -40,15 +40,11 @@ $globals->expiredManager = new ExpiredFileManager($config->expiredDb, $config->e
 $globals->terminated = 0;
 $globals->cloud = new Cloud($config);
 
-// 初始化 producer
-$clientHandler = new Pheanstalk('127.0.0.1');
-$clientHandler->useTube('composer');
-
-set_exception_handler(function (Throwable $ex) use ($globals) {
-    unset($globals->expiredManager);
-    Log::error('=============== set_exception_handler =================');
-    Log::error($ex->getTraceAsString());
-});
+//set_exception_handler(function (Throwable $ex) use ($globals) {
+//    unset($globals->expiredManager);
+//    Log::error('=============== set_exception_handler =================');
+//    Log::error($ex->getTraceAsString());
+//});
 
 $signal_handler = function ($signal) use(&$globals) {
     Log::warn("kill signal, please wait ...");
@@ -58,6 +54,20 @@ $signal_handler = function ($signal) use(&$globals) {
 pcntl_signal(SIGINT, $signal_handler);  // Ctrl + C
 pcntl_signal(SIGCHLD, $signal_handler);
 pcntl_signal(SIGTSTP, $signal_handler);  // Ctrl + Z
+
+// 临时 workaround
+@exec('rm -f /tmp/composer_*');
+
+// 初始化 producer
+$clientHandler = new Pheanstalk('127.0.0.1');
+$clientHandler->useTube('composer');
+
+$stats = $clientHandler->stats();
+if (intval($stats['current-jobs-ready']) > 0) {
+    Log::warn('还有未完成的jobs，继续等待');
+    sleep(30);
+    exit();
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -348,7 +358,8 @@ function flushFiles($config)
 function checkHashOfFile($file)
 {
     // validate file hash
-    if (($startpos = strpos($file, '$')) !== false) {
+    $ext = pathinfo($file, PATHINFO_EXTENSION);
+    if ($ext == 'json' && ($startpos = strpos($file, '$')) !== false) {
         $aHash = substr($file, $startpos + 1, 64);
         $bHash = hash('sha256', file_get_contents($file));
         if ($aHash !== $bHash) {
