@@ -69,7 +69,6 @@ class Cloud
     {
         Log::info($file);
         if (!file_exists($file)) {
-            unset($this->globals->expiredManager);
             throw new \RuntimeException('pushOneFile, Not found => ' . $file);
         }
 
@@ -103,7 +102,7 @@ class Cloud
         }
 
     __END__:
-        $ext == 'zip' and $tmpfile and unlink($tmpfile);
+        $ext == 'zip' and file_exists($tmpfile) and unlink($tmpfile);
         return $ret;
     }
 
