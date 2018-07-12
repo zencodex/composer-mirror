@@ -36,7 +36,7 @@ file_exists($config->distdir) or mkdir($config->distdir, 0777, true);
 $globals = new \stdClass;
 $globals->q = new \SplQueue;
 $globals->timestamp = time();
-$globals->expiredManager = new ExpiredFileManager($config->expiredDb, $config->expireMinutes);
+//$globals->expiredManager = new ExpiredFileManager($config->expiredDb, $config->expireMinutes);
 $globals->terminated = 0;
 $globals->cloud = new Cloud($config);
 
@@ -92,7 +92,7 @@ downloadZipballs($config, $jsonfiles);
 
 // STEP 4
 flushFiles($config);
-unset($globals->expiredManager);
+//unset($globals->expiredManager);
 
 //Log::warn("wait for 120s....");
 //sleep(120);
@@ -135,12 +135,12 @@ function downloadProviders($config)
         if (!file_exists($cachename)) {
             $data = request($config->packagistUrl . '/' . $fileurl);
             if ($data) {
-                $oldcache = $cachedir . str_replace('%hash%.json', '*', $tpl);
-                if ($glob = glob($oldcache)) {
-                    foreach ($glob as $old) {
-                        $globals->expiredManager->add($old, time());
-                    }
-                }
+//                $oldcache = $cachedir . str_replace('%hash%.json', '*', $tpl);
+//                if ($glob = glob($oldcache)) {
+//                    foreach ($glob as $old) {
+//                        $globals->expiredManager->add($old, time());
+//                    }
+//                }
 
                 storeFile($cachename, $data);
                 $config->cloudsync and pushJob2Task($cachename);
@@ -243,11 +243,11 @@ function downloadPackages($config, $providers)
                 //                $urls[] = $config->url . '/p/' . $req->packageName . '.json';
                 $jsonfiles[] = $cachefile;
 
-                if ($glob = glob("{$cachedir}p/$req->packageName\$*")) {
-                    foreach ($glob as $old) {
-                        $globals->expiredManager->add($old, time());
-                    }
-                }
+//                if ($glob = glob("{$cachedir}p/$req->packageName\$*")) {
+//                    foreach ($glob as $old) {
+//                        $globals->expiredManager->add($old, time());
+//                    }
+//                }
                 storeFile($cachefile, (string)$res->getBody());
                 //                storeFile($cachefile2, (string)$res->getBody());
 
