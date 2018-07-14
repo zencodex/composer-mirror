@@ -8,15 +8,8 @@
 
 use zencodex\PackagistCrawler\Log;
 
-define('ROOTDIR', __DIR__ . '/../..');
-
+$config = require(__DIR__ . '/config.php');
 require_once ROOTDIR . '/vendor/autoload.php';
-
-if (file_exists(ROOTDIR . '/config.php')) {
-    $config = require ROOTDIR . '/config.php';
-} else {
-    $config = require ROOTDIR . '/config.default.php';
-}
 
 declare(ticks = 1);
 @exec('ulimit -n 10000');
@@ -26,3 +19,4 @@ putenv("GUZZLE_CURL_SELECT_TIMEOUT=" . $config->timeout);
 
 date_default_timezone_set('PRC');
 Log::debug(sprintf('使用的时区: %s, 当前时间: %s', date_default_timezone_get(), date('Y-m-d H:i:s')));
+

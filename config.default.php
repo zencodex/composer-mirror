@@ -7,6 +7,7 @@
 return (object)[
     'distdir' => __DIR__ . '/dist/',
     'cachedir' => __DIR__ . '/cache/',
+    'dbdir' => __DIR__ . '/db/',
     'packagistUrl' => 'https://packagist.org',
     'mirrorUrl' => 'https://packagist.laravel-china.org',
     'distUrl' => 'https://dl.laravel-china.org/',
@@ -20,6 +21,7 @@ return (object)[
     'timeout' => 6000,   // guzzle timeout
     'upyun' => (object)[
         'operator' => 'composer',
+        'operator' => '',
         'password' => '',
         'bucket' => (object)[
             'json' => 'mirror-json',

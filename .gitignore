@@ -3,7 +3,7 @@ cache/*
 dist/
 logs
 vendor
-config.php
+/config.php
 packagist.tar.bz2
 optimize.db
 optimized
