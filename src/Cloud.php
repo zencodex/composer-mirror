@@ -16,6 +16,7 @@ class Cloud
     private $config;
     private $client;
     private $lastUpload = [];
+    private $_cachedCloudFiles;
 
     public function __construct($config)
     {
@@ -162,6 +163,116 @@ class Cloud
             Log::debug("refreshCdnCache => $remoteUrl \n");
         } catch (\Exception $e) {
             Log::error('refreshCdnCache => '. $e->getMessage());
+        }
+    }
+
+    public function clearCloudJsonFiles()
+    {
+        $this->loadCachedCloudFiles($this->config->cachedir);
+        $this->client->setConfig( $this->bucketConfig('json') );
+        $this->travels(rtrim($this->config->cachedir, '/'), '/');
+        unlink($this->config->distdir . 'cloudfiles.txt');
+    }
+
+    public function clearCloudDistFiles()
+    {
+        $this->loadCachedCloudFiles($this->config->distdir);
+        $this->client->setConfig( $this->bucketConfig('zip') );
+        $this->travels(rtrim($this->config->distdir, '/'), '/');
+        unlink($this->config->distdir . 'cloudfiles.txt');
+    }
+
+    public function travels($local = '', $dir = '/')
+    {
+        $params = ['X-List-Limit' => 5000];
+
+        if ($dir[ strlen($dir) - 1 ] !== '/') {
+            $dir .= '/';
+        }
+
+        $isEmptyFolder = true;
+        do {
+            try {
+                $res = $this->client->read($dir, null, $params);
+                $isEmptyFolder = $this->handleCloudFiles($local, $dir, $res['files']);
+            } catch (\Exception $e) {
+                Log::error($e->getMessage());
+                break;
+            }
+
+            if (isset($res['iter'])) {
+                $params['X-List-Iter'] = $res['iter'];
+            }
+
+        } while (!$res['is_end']);
+
+        // 删除空文件夹
+        if ($isEmptyFolder) {
+            $localdir = $local . $dir;
+
+            if (is_dir($localdir)) {
+                Log::warn("remote is empty, but local is not => $localdir");
+                @exec("rm -rf $localdir");
+            } else {
+                Log::warn("remove remote empty folder => $dir");
+            }
+
+            try {
+                $this->client->deleteDir($dir);
+            } catch (\Exception $e) {
+                Log::error($e->getMessage());
+            }
+        }
+    }
+
+    public function handleCloudFiles($local, $dir, $files)
+    {
+        foreach ($files as $fileObj) {
+            $isEmptyFolder = false;
+
+            $uri = $dir . $fileObj['name'];
+            if (isset($this->_cachedCloudFiles[$uri])) {
+                Log::warn("skip uri => " . $local . $uri);
+                continue;
+            }
+
+            Log::info("name = {$fileObj['name']}, type = {$fileObj['type']}, uri = " . $local . $uri);
+            // 如果为目录，递归查找
+            if ($fileObj['type'] == 'F') {
+                $this->travels($local, $uri);
+            } else {
+                // composer.phar
+                if (strpos($uri, 'composer.phar') > 0) {
+                    Log::warn("skip composer.phar");
+                    continue;
+                }
+
+                // 判断本地文件, 不存在，删除远程
+                if (!file_exists($local . $uri)) {
+                    Log::warn("local not found, so remove remote file => $uri");
+                    try {
+                        $this->client->delete($uri, true);
+                    } catch (\Exception $e) {
+                        Log::error($e->getMessage());
+                    }
+                }
+            }
+
+            if ($dir === '/') {
+                file_put_contents($local . '/cloudfiles.txt', $uri . PHP_EOL, FILE_APPEND);
+            }
+        }
+
+        return $isEmptyFolder;
+    }
+
+    public function loadCachedCloudFiles($localdir)
+    {
+        if (file_exists($localdir . 'cloudfiles.txt')) {
+            $cloudfiles = file($localdir . 'cloudfiles.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            foreach ($cloudfiles as $f) {
+                $this->_cachedCloudFiles[$f] = true;
+            }
         }
     }
 }

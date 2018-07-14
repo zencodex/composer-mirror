@@ -6,21 +6,80 @@
  */
 
 namespace zencodex\PackagistCrawler;
+
 use ProgressBar\Manager as ProgressBarManager;
 
-class FileUtils
+class FileUtils extends InstanceBase
 {
+    private static $_instance;
     private $config;
+    private $cloud;
 
-    public function __construct($config)
+    public static function getInstance()
     {
-        $this->config = $config;
+        $instance = self::$_instance;
+        if ($instance == null) {
+            $instance = new static;
+            $instance->cloud = App::getCloud();
+            $instance->config = App::getConfig();
+            self::$_instance = $instance;
+        }
+        return $instance;
+    }
+
+    /**
+     * 检测文件的hash值
+     * @param $file
+     */
+    protected function checkHashOfFile($file)
+    {
+        // validate file hash
+        $ext = pathinfo($file, PATHINFO_EXTENSION);
+        if ($ext == 'json' && ($startpos = strpos($file, '$')) !== false) {
+            $aHash = substr($file, $startpos + 1, 64);
+            $bHash = hash('sha256', file_get_contents($file));
+            if ($aHash !== $bHash) {
+                unlink($file);
+
+                // remove remote json file
+                if ($this->config->cloudsync) {
+                    $this->cloud->removeRemoteFile($file);
+                }
+
+                throw new \RuntimeException("签名错误!!! $aHash : $bHash, $file");
+            }
+        }
+    }
+
+    /**
+     * 保存文件
+     * @param $file
+     * @param $data
+     */
+    protected function storeFile($file, $data)
+    {
+        if (!file_exists(dirname($file))) {
+            mkdir(dirname($file), 0777, true);
+        }
+
+        file_put_contents($file, $data, LOCK_EX);
+        $this->checkHashOfFile($file);
+    }
+
+    /**
+     * 更新文件的修改和访问时间
+     * @param $file
+     */
+    protected function touchFile($file, $timestamp)
+    {
+//    checkHashOfFile($file);
+        touch($file, $timestamp, $timestamp);
     }
 
     /**
      * check sha256
      */
-    function badCountOfAllPackages()
+    protected function badCountOfAllPackages()
     {
         Log::info('------------- ' . __FUNCTION__ . ' -------------');
 
@@ -49,6 +108,33 @@ class FileUtils
                     ++$j;
                 }
 
+                // 检测zip包
+                $originContent = file_get_contents($file);
+                $packageData = json_decode($originContent, true);
+                foreach ($packageData['packages'] as $packageName => $versions) {
+                    foreach ($versions as $verNumber => $vMeta) {
+
+                        // 废弃的包 dist url 为null，跳过不处理
+                        // bananeapocalypse/nuitinfo2013api
+                        // This package is abandoned and no longer maintained. No replacement package was suggested.
+
+                        if (!$vMeta['dist']['url']) {
+                            Log::error('发现异常包，跳过: ' . $vMeta['dist']['url']);
+                            continue;
+                        }
+
+                        // 保存 github/bitbucket ... 真实对应下载地址
+                        $zipFile = $this->config->distdir . $packageName . '/' . $vMeta['dist']['reference'] . '.zip';
+                        if (!file_exists($zipFile)) {
+                            $this->storeFile($zipFile, $vMeta['dist']['url']);
+                            if (!$this->config->cloudsync) continue;
+                            App::pushJob2Task($zipFile);
+                        } else {
+                            $this->touchFile($zipFile, App::getInstance()->timestamp);
+                        }
+                    }
+                }
+
                 $progressBar->advance();
             }
         }
@@ -57,7 +143,7 @@ class FileUtils
         return $i;
     }
 
-    function badCountOfProviderPackages($baseFile = 'packages.json.new')
+    protected function badCountOfProviderPackages($baseFile = 'packages.json.new')
     {
         Log::info('------------- ' . __FUNCTION__ . ' -------------');
         $cachedir = $this->config->cachedir;

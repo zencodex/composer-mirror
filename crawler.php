@@ -5,11 +5,9 @@ use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\RequestOptions;
 use ProgressBar\Manager as ProgressBarManager;
-use zencodex\PackagistCrawler\Cloud;
-use zencodex\PackagistCrawler\ExpiredFileManager;
+use zencodex\PackagistCrawler\App;
 use zencodex\PackagistCrawler\FileUtils;
 use zencodex\PackagistCrawler\Log;
-use Pheanstalk\Pheanstalk;
 
 require_once __DIR__ . '/src/lib/init.php';
 
@@ -17,6 +15,7 @@ require_once __DIR__ . '/src/lib/init.php';
 //    throw new \RuntimeException("$config->lockfile exists");
 //}
 
+$config = App::getConfig();
 $config->cloudsync or Log::warn('NOTE: WOULD NOT SYNC TO CLOUD');
 
 // 检测并生成必要目录
@@ -33,12 +32,7 @@ file_exists($config->distdir) or mkdir($config->distdir, 0777, true);
 | 全局变量
 |--------------------------------------------------------------------------
 */
-$globals = new \stdClass;
-$globals->q = new \SplQueue;
-$globals->timestamp = time();
 //$globals->expiredManager = new ExpiredFileManager($config->expiredDb, $config->expireMinutes);
-$globals->terminated = 0;
-$globals->cloud = new Cloud($config);
 
 //set_exception_handler(function (Throwable $ex) use ($globals) {
 //    unset($globals->expiredManager);
@@ -46,9 +40,9 @@ $globals->cloud = new Cloud($config);
 //    Log::error($ex->getTraceAsString());
 //});
 
-$signal_handler = function ($signal) use(&$globals) {
+$signal_handler = function ($signal) {
     Log::warn("kill signal, please wait ...");
-    $globals->terminated = 1;
+    App::getInstance()->terminated = 1;
 };
 
 pcntl_signal(SIGINT, $signal_handler);  // Ctrl + C
@@ -59,9 +53,7 @@ pcntl_signal(SIGTSTP, $signal_handler);  // Ctrl + Z
 @exec('rm -f /tmp/composer_*');
 
 // 初始化 producer
-$clientHandler = new Pheanstalk('127.0.0.1');
-$clientHandler->useTube('composer');
-
+$clientHandler = App::getClientHandler();
 $stats = $clientHandler->stats();
 if (intval($stats['current-jobs-ready']) > 0) {
     Log::warn('还有未完成的jobs，继续等待');
@@ -79,8 +71,7 @@ if (intval($stats['current-jobs-ready']) > 0) {
 
 // STEP 1
 $providers = downloadProviders($config);
-$fileUtils = new FileUtils($config);
-if ($fileUtils->badCountOfProviderPackages() !== 0) {
+if (FileUtils::badCountOfProviderPackages() !== 0) {
     throw new RuntimeException('!!! flushFiles => packages.json.new 存在错误，跳过更新 !!!');
 }
 
@@ -103,7 +94,6 @@ exit;
  */
 function downloadProviders($config)
 {
-    global $globals;
     $cachedir = $config->cachedir;
     $packagesCache = $cachedir . 'packages.json';
 
@@ -125,8 +115,9 @@ function downloadProviders($config)
     $progressBar = new ProgressBarManager(0, $numberOfProviders);
     $progressBar->setFormat('Downloading Providers: %current%/%max% [%bar%] %percent%%');
 
+    $app = App::getInstance();
     foreach ($packages->{'provider-includes'} as $tpl => $version) {
-        $globals->terminated and exit();
+        $app->terminated and exit();
 
         $fileurl = str_replace('%hash%', $version->sha256, $tpl);
         $cachename = $cachedir . $fileurl;
@@ -142,14 +133,12 @@ function downloadProviders($config)
 //                    }
 //                }
 
-                storeFile($cachename, $data);
-                $config->cloudsync and pushJob2Task($cachename);
-            } else {
-                $globals->retry = true;
+                FileUtils::storeFile($cachename, $data);
+                $app->getConfig()->cloudsync and $app->pushJob2Task($cachename);
             }
         } else {
             // Just update filetime
-            touchFile($cachename);
+            FileUtils::touchFile($cachename, $app->timestamp);
         }
 
         $progressBar->advance();
@@ -164,27 +153,26 @@ function downloadProviders($config)
  */
 function downloadPackages($config, $providers)
 {
-    global $globals;
     $cachedir = $config->cachedir;
     $i = 1;
     $numberOfProviders = count($providers);
     $jsonfiles = [];
     $packageObjs = [];
 
+    $app = App::getInstance();
     foreach ($providers as $providerjson) {
         $list = json_decode(file_get_contents($providerjson));
         if (!$list || empty($list->providers)) continue;
 
         $list = $list->providers;
-        $all = count((array)$list);
-
+//        $all = count((array)$list);
 //        $progressBar = new ProgressBarManager(0, $all);
         echo "   - Provider {$i}/{$numberOfProviders}:\n";
 //        $progressBar->setFormat("      - Package: %current%/%max% [%bar%] %percent%%");
 
         $sum = 0;
         foreach ($list as $packageName => $provider) {
-            $globals->terminated and exit();
+            $app->terminated and exit();
 
 //            $progressBar->advance();
             ++$sum;
@@ -192,7 +180,7 @@ function downloadPackages($config, $providers)
             $cachefile = $cachedir . str_replace("$config->packagistUrl/", '', $url);
 
             if (file_exists($cachefile)) {
-                touchFile($cachefile);
+                FileUtils::touchFile($cachefile, $app->timestamp);
                 continue;
             }
 
@@ -215,7 +203,7 @@ function downloadPackages($config, $providers)
     foreach ($arrChuncks as $chunk) {
         $requests = [];
         foreach ($chunk as $package) {
-            $globals->terminated and exit();
+            App::getInstance()->terminated and exit();
 
             $req = new Request('GET', $package->url);
             $req->sha256 = $package->sha256;
@@ -225,7 +213,9 @@ function downloadPackages($config, $providers)
 
         $pool = new Pool($client, $requests, [
             'concurrency' => $config->maxConnections,
-            'fulfilled' => function ($res, $index) use (&$jsonfiles, &$requests, &$config, &$globals, $progressBar) {
+            'fulfilled' => function ($res, $index) use (&$jsonfiles, &$requests, $progressBar) {
+
+                $config = App::getConfig();
 
                 $req = $requests[$index];
                 $cachedir = $config->cachedir;
@@ -233,14 +223,11 @@ function downloadPackages($config, $providers)
 
                 if (200 !== $res->getStatusCode() || $req->sha256 !== hash('sha256', (string)$res->getBody())) {
                     Log::error( "\t sha256 wrong => ". $req->getUri());
-                    $globals->retry = true;
                     return;
                 }
 
-                $cachefile = $cachedir
-                    . str_replace("$config->packagistUrl/", '', $req->getUri());
+                $cachefile = $cachedir . str_replace("$config->packagistUrl/", '', $req->getUri());
                 //                $cachefile2 = $cachedir . '/p/' . $req->packageName . '.json';
-                //                $urls[] = $config->url . '/p/' . $req->packageName . '.json';
                 $jsonfiles[] = $cachefile;
 
 //                if ($glob = glob("{$cachedir}p/$req->packageName\$*")) {
@@ -249,11 +236,9 @@ function downloadPackages($config, $providers)
 //                    }
 //                }
 
-                storeFile($cachefile, (string)$res->getBody());
-                //                storeFile($cachefile2, (string)$res->getBody());
-
+                FileUtils::storeFile($cachefile, (string)$res->getBody());
                 if ($config->cloudsync) {
-                    pushJob2Task($cachefile);
+                    App::pushJob2Task($cachefile);
                 }
             },
             'rejected' => function ($reason, $index) use (&$requests, &$progressBar) {
@@ -270,6 +255,9 @@ function downloadPackages($config, $providers)
 
 function downloadZipballs($config, $jsonfiles)
 {
+    $fileUtils = FileUtils::getInstance();
+    $app = App::getInstance();
+
     $progressBar = new ProgressBarManager(0, count($jsonfiles));
     $progressBar->setFormat("   - " . __FUNCTION__ . ": %current%/%max% [%bar%] %percent%%");
 
@@ -281,8 +269,7 @@ function downloadZipballs($config, $jsonfiles)
 
         foreach ($packageData['packages'] as $packageName => $versions) {
             foreach ($versions as $verNumber => $vMeta) {
-                global $globals, $config;
-                $globals->terminated and exit();
+                $app->terminated and exit();
 
                 // 废弃的包 dist url 为null，跳过不处理
                 // bananeapocalypse/nuitinfo2013api
@@ -296,35 +283,16 @@ function downloadZipballs($config, $jsonfiles)
                 // 保存 github/bitbucket ... 真实对应下载地址
                 $zipFile = $config->distdir . $packageName . '/' . $vMeta['dist']['reference'] . '.zip';
                 if (!file_exists($zipFile)) {
-                    storeFile($zipFile, $vMeta['dist']['url']);
-                    if (!$config->cloudsync) continue;
-                    pushJob2Task($zipFile);
-//                    $config->isPrefetch ? $globals->cloud->prefetchDistFile($zipFile) : $globals->cloud->pushOneFile($zipFile);
+                    $fileUtils->storeFile($zipFile, $vMeta['dist']['url']);
+                    if (!$app->getConfig()->cloudsync) continue;
+                    $app->pushJob2Task($zipFile);
+//                    $app->getConfig()->isPrefetch ? $app->getCloud()->prefetchDistFile($zipFile) : $app->getCloud()->pushOneFile($zipFile);
                 }
             }
         }
     }
 }
 
-/**
- * 推送异步任务到 beanstalk
- * @param $data
- * @param string $method
- * @param int $delay
- */
-function pushJob2Task($data, $method='pushOneFile', $delay = 0)
-{
-    global $clientHandler;
-    $clientHandler->put(
-        json_encode([
-            'method' => $method,
-            'data' => $data
-        ]),
-        23,      // Give the job a priority of 23.
-        $delay,  // Do not wait to put job into the ready queue.
-        0        // Give the job 1 minute to run.
-    );
-}
 
 /**
  * 更新 packages.json
@@ -332,7 +300,7 @@ function pushJob2Task($data, $method='pushOneFile', $delay = 0)
  */
 function flushFiles($config)
 {
-    global $globals;
+    $app = App::getInstance();
     $cachedir = $config->cachedir;
     $packages = json_decode(file_get_contents($cachedir.'packages.json.new'));
     $packages->mirrors = [
@@ -342,71 +310,18 @@ function flushFiles($config)
         ]
     ];
 
-    $packages->update_at = date('Y-m-d H:i:s', $globals->timestamp);
+    $packages->update_at = date('Y-m-d H:i:s', $app->timestamp);
     file_put_contents($config->cachedir . 'packages.json', json_encode($packages));
-
     unlink($config->cachedir . 'packages.json.new');
 
-    $config->cloudsync and pushJob2Task($config->cachedir . 'packages.json');
+    $app->getConfig()->cloudsync and $app->pushJob2Task($config->cachedir . 'packages.json');
     Log::debug('finished! flushFiles...');
-}
-
-/**
- * 检测文件的hash值
- * @param $file
- */
-function checkHashOfFile($file)
-{
-    // validate file hash
-    $ext = pathinfo($file, PATHINFO_EXTENSION);
-    if ($ext == 'json' && ($startpos = strpos($file, '$')) !== false) {
-        $aHash = substr($file, $startpos + 1, 64);
-        $bHash = hash('sha256', file_get_contents($file));
-        if ($aHash !== $bHash) {
-            global $config, $globals;
-            unlink($file);
-
-            // remove remote json file
-            if ($config->cloudsync) {
-                $globals->cloud->removeRemoteFile($file);
-            }
-
-            throw new \RuntimeException("签名错误!!! $aHash : $bHash, $file");
-        }
-    }
-}
-
-/**
- * 保存文件
- * @param $file
- * @param $data
- */
-function storeFile($file, $data)
-{
-    if (!file_exists(dirname($file))) {
-        mkdir(dirname($file), 0777, true);
-    }
-
-    file_put_contents($file, $data, LOCK_EX);
-    checkHashOfFile($file);
-}
-
-/**
- * 更新文件的修改和访问时间
- * @param $file
- */
-function touchFile($file)
-{
-    global $globals;
-//    checkHashOfFile($file);
-    touch($file, $globals->timestamp, $globals->timestamp);
 }
 
 function request($url)
 {
-    global $config;
     try {
-        $client = new Client([RequestOptions::TIMEOUT => $config->timeout]);
+        $client = new Client([RequestOptions::TIMEOUT => App::getInstance()->getConfig()->timeout]);
         $res = $client->get($url);
         return (string)$res->getBody();
     } catch (\Exception $e) {

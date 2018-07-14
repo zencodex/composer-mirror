@@ -6,14 +6,14 @@
  * Time: 11:49 AM
  */
 
-use ProgressBar\Manager as ProgressBarManager;
-use zencodex\PackagistCrawler\Cloud;
-use zencodex\PackagistCrawler\ExpiredFileManager;
-use zencodex\PackagistCrawler\Log;
 use Symfony\Component\Finder\Finder;
+use zencodex\PackagistCrawler\App;
+use zencodex\PackagistCrawler\Cloud;
+use zencodex\PackagistCrawler\Log;
 
 require_once __DIR__ . '/src/lib/init.php';
 
+$config = App::getConfig();
 $config->cloudsync or Log::warn('NOTE: WOULD NOT SYNC TO CLOUD');
 //$expiredManager = new ExpiredFileManager($config->expiredDb, $config->expireMinutes);
 //
