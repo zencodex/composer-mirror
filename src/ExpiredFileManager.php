@@ -1,11 +1,11 @@
 <?php
+
 /**
+ * Deprecated 暂时无用
  * @license CC0-1.0
  */
 namespace zencodex\PackagistCrawler;
-
 use PDO;
-use DateTime;
 
 class ExpiredFileManager
 {

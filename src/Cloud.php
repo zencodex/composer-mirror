@@ -96,7 +96,7 @@ class Cloud
             $f = fopen($tmpfile, 'rb');
             $this->client->write($uri, $f);
 //            $this->client->write($uri, file_get_contents($tmpfile));
-            Log::info('pushOneFile success => '. $file);
+            Log::debug('pushOneFile success => '. $file);
             $ret = 1;
         } catch (\Exception $e) {
             Log::error("pushOneFile => $file \n" . $e->getMessage());

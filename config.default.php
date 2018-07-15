@@ -24,8 +24,8 @@ return (object)[
     'isPrefetch' => false,
     'timeout' => 6000,   // guzzle timeout
     'upyun' => (object)[
-        'operator' => 'composer',
-        'password' => 'VXvgE59ooJ',
+        'operator' => '',
+        'password' => '',
         'bucket' => (object)[
             'json' => 'mirror-json',
             'zip' => 'mirror-dist',

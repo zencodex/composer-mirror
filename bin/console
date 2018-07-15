@@ -1,0 +1,20 @@
+<?php
+
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../src/lib/init.php';
+
+use Symfony\Component\Finder\Finder;
+use Symfony\Component\Console\Application;
+use zencodex\PackagistCrawler\Commands\ClearCommand;
+
+$app = new Application();
+
+$finder = new Finder();
+$finder->files()->in(__DIR__ . '/../src/Commands');
+foreach ($finder as $fileObj) {
+    $nameWithoutExtention = str_replace('.php', '', $fileObj->getFilename());
+    $className = "zencodex\\PackagistCrawler\\Commands\\" . $nameWithoutExtention;
+    $app->add(new $className());
+}
+
+$app->run();
