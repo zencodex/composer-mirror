@@ -82,11 +82,14 @@ class FileUtils extends InstanceBase
     protected function badCountOfAllPackages()
     {
         Log::info('------------- ' . __FUNCTION__ . ' -------------');
+        $app = App::getInstance();
 
         $cachedir = $this->config->cachedir;
         $packagejson = json_decode(file_get_contents($cachedir.'packages.json'));
 
         $i = $j = 0;
+        $errCount = $touchCount = $allCount = 0;
+
         foreach ($packagejson->{'provider-includes'} as $tpl => $provider) {
             $providerjson = str_replace('%hash%', $provider->sha256, $tpl);
             $packages = json_decode(file_get_contents($cachedir.$providerjson));
@@ -119,7 +122,8 @@ class FileUtils extends InstanceBase
                         // This package is abandoned and no longer maintained. No replacement package was suggested.
 
                         if (!$vMeta['dist']['url']) {
-                            Log::error('发现异常包，跳过: ' . $vMeta['dist']['url']);
+//                            Log::error('发现异常包，跳过: ' . $vMeta['dist']['url']);
+                            ++$errCount;
                             continue;
                         }
 
@@ -128,10 +132,13 @@ class FileUtils extends InstanceBase
                         if (!file_exists($zipFile)) {
                             $this->storeFile($zipFile, $vMeta['dist']['url']);
                             if (!$this->config->cloudsync) continue;
-                            App::pushJob2Task($zipFile);
+                            $app->pushJob2Task($zipFile);
                         } else {
-                            $this->touchFile($zipFile, App::getInstance()->timestamp);
+                            $this->touchFile($zipFile, $app->timestamp);
+                            ++$touchCount;
                         }
+
+                        ++$allCount;
                     }
                 }
 
@@ -139,6 +146,9 @@ class FileUtils extends InstanceBase
             }
         }
 
+        // 保存时间
+        $line = implode(',', [$app->timestamp, $errCount, $touchCount, $allCount]);
+        file_put_contents($this->config->dbdir . 'touchall.log', $line . PHP_EOL, FILE_APPEND);
         Log::info($i . ' / ' . ($i + $j));
         return $i;
     }

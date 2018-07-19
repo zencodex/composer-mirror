@@ -18,6 +18,9 @@ class Cloud
     private $lastUpload = [];
     private $_cachedCloudFiles;
 
+    const JSON_CACHE_FILE = 'cached.json';
+    const DIST_CACHE_FILE = 'cached.dist';
+
     public function __construct($config)
     {
         $this->config = $config;
@@ -132,6 +135,8 @@ class Cloud
 
     public function removeRemoteFile($file)
     {
+        if (strpos($file, 'composer.phar') > 0) return;
+
         $ext = pathinfo($file, PATHINFO_EXTENSION);
         if ($ext == 'zip') {
             $start = strlen($this->config->distdir);
@@ -168,7 +173,7 @@ class Cloud
 
     public function clearCloudJsonFiles()
     {
-        $this->loadCachedCloudFiles($this->config->cachedir);
+        $this->loadCachedCloudFiles($this->config->dbdir . self::JSON_CACHE_FILE);
         $this->client->setConfig( $this->bucketConfig('json') );
         $this->travels(rtrim($this->config->cachedir, '/'), '/');
         unlink($this->config->distdir . 'cloudfiles.txt');
@@ -176,7 +181,7 @@ class Cloud
 
     public function clearCloudDistFiles()
     {
-        $this->loadCachedCloudFiles($this->config->distdir);
+        $this->loadCachedCloudFiles($this->config->dbdir . self::DIST_CACHE_FILE);
         $this->client->setConfig( $this->bucketConfig('zip') );
         $this->travels(rtrim($this->config->distdir, '/'), '/');
         unlink($this->config->distdir . 'cloudfiles.txt');
@@ -227,9 +232,10 @@ class Cloud
 
     public function handleCloudFiles($local, $dir, $files)
     {
+        $isEmptyFolder = true;
+
         foreach ($files as $fileObj) {
             $isEmptyFolder = false;
-
             $uri = $dir . $fileObj['name'];
             if (isset($this->_cachedCloudFiles[$uri])) {
                 Log::warn("skip uri => " . $local . $uri);
@@ -266,10 +272,10 @@ class Cloud
         return $isEmptyFolder;
     }
 
-    public function loadCachedCloudFiles($localdir)
+    public function loadCachedCloudFiles($cachedFile)
     {
-        if (file_exists($localdir . 'cloudfiles.txt')) {
-            $cloudfiles = file($localdir . 'cloudfiles.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if (file_exists($cachedFile)) {
+            $cloudfiles = file($cachedFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             foreach ($cloudfiles as $f) {
                 $this->_cachedCloudFiles[$f] = true;
             }

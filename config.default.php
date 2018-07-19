@@ -7,6 +7,7 @@
 return (object)[
     'distdir' => __DIR__ . '/dist/',
     'cachedir' => __DIR__ . '/cache/',
+    'dbdir' => __DIR__ . '/db/',
     //'cachedir' => '/usr/share/nginx/html/',
     //'cachedir' => '/usr/local/apache2/htdocs/',
     'packagistUrl' => 'https://packagist.org',

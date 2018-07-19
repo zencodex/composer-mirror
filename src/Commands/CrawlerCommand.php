@@ -101,7 +101,6 @@ class CrawlerCommand extends Command
         }
 
         $providers = [];
-
         $numberOfProviders = count( (array)$packages->{'provider-includes'} );
         $progressBar = new ProgressBarManager(0, $numberOfProviders);
         $progressBar->setFormat('Downloading Providers: %current%/%max% [%bar%] %percent%%');
