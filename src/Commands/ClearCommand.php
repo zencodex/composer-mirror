@@ -97,38 +97,25 @@ class ClearCommand extends Command
         $config = App::getConfig();
         $cloud = new Cloud($config);
 
-        $i = 0;
-        $delUris = [];
+        $i = $index = $startfrom = 0;
+        if (file_exists($config->dbdir . Rainbow::DIST_URI_MAP . '.log')) {
+            $startfrom = intval(file_get_contents($config->dbdir . Rainbow::DIST_URI_MAP . '.log'));
+        }
+
         $mapUris = file($config->dbdir . Rainbow::DIST_URI_MAP, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         foreach ($mapUris as $uri) {
+            $index++;
+            if ($index < $startfrom) continue;
+
             $zipFile = $config->distdir . ltrim($uri, '/');
             if (!file_exists($zipFile)) {
                 Log::info('local not found => ' . $zipFile);
                 $cloud->removeRemoteFile($zipFile);
-
+                file_put_contents($config->dbdir . Rainbow::DIST_URI_MAP . '.log', $index);
                 ++$i;
-                $delUris[] = $uri;
-
-                if ($i % 1000 === 0) {
-                    Log::warn(count($delUris));
-                    $this->saveToDisk($config->dbdir . Rainbow::DIST_URI_MAP, $delUris);
-                    Log::error(count($delUris));
-                }
             }
         }
 
-        $this->saveToDisk($config->dbdir . Rainbow::DIST_URI_MAP, $delUris);
         Log::warn("$i files removed from cloud");
-    }
-
-    public function saveToDisk($file, &$delUris)
-    {
-        $contents = file_get_contents($file);
-        foreach ($delUris as $v) {
-            $contents = str_replace($v . PHP_EOL, '', $contents);
-        }
-
-        file_put_contents($file, $contents, LOCK_EX);
-        $delUris = [];
     }
 }
