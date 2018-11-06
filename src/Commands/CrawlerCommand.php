@@ -150,6 +150,7 @@ class CrawlerCommand extends Command
         $packageObjs = [];
 
         $app = App::getInstance();
+        $sum = 0;
         foreach ($providers as $providerjson) {
             $list = json_decode(file_get_contents($providerjson));
             if (!$list || empty($list->providers)) continue;
@@ -160,7 +161,6 @@ class CrawlerCommand extends Command
             echo "   - Provider {$i}/{$numberOfProviders}:\n";
 //        $progressBar->setFormat("      - Package: %current%/%max% [%bar%] %percent%%");
 
-            $sum = 0;
             foreach ($list as $packageName => $provider) {
                 $app->terminated and exit();
 
@@ -184,6 +184,7 @@ class CrawlerCommand extends Command
             ++$i;
         }
 
+        Log::warn("Total packages count = $sum");
         // 开始下载
         $arrChuncks = array_chunk($packageObjs, $config->maxConnections);
         $progressBar = new ProgressBarManager(0, count($packageObjs));
