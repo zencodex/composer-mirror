@@ -54,7 +54,7 @@ class PatchCommand extends Command
 
     public function split($pdir, $p2dir)
     {
-        $to_move = ['0', '1', '2', '3', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 's', 'k', 'y', 'z'];
+        $to_move = ['0', '1', '2', '3', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 's', 'k', 'y', 'z'];
         // $to_move = ['0', '1'];
         if (!file_exists($p2dir)) {
             mkdir($p2dir, 0777, true);
