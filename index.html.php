@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
-    <title>Composer Packagist Mirror</title>
+    <title>Composer 中国全量镜像</title>
     <style>
         @font-face {
             font-family: octicons-anchor;
@@ -943,4 +942,13 @@ chmod a+x <span class="hljs-regexp">/usr/</span>local<span class="hljs-regexp">/
         <p>注意 <code>selfupdate</code> 升级命令会连接官方服务器，速度很慢。建议直接下载我们的 <code>composer.phar</code> 镜像，每天都会更新到最新。</p>
     </blockquote>
 </div>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?642df4b4cce6054913720f58f84318ce";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
 </body></html>
