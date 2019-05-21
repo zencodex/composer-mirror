@@ -6,7 +6,7 @@
 |--------------------------------------------------------------------------
 */
 
-use zencodex\PackagistCrawler\Log;
+use zencodex\ComposerMirror\Log;
 
 $config = require(__DIR__ . '/config.php');
 require_once ROOTDIR . '/vendor/autoload.php';

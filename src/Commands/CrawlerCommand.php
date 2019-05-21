@@ -1,6 +1,12 @@
 <?php
 
-namespace zencodex\PackagistCrawler\Commands;
+/*
+|--------------------------------------------------------------------------
+| 镜像数据的爬取，主要是每个包的 JSON 数据，和对应 github 上的 zip 包
+|--------------------------------------------------------------------------
+*/
+
+namespace zencodex\ComposerMirror\Commands;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
@@ -9,10 +15,10 @@ use GuzzleHttp\RequestOptions;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use zencodex\PackagistCrawler\App;
-use zencodex\PackagistCrawler\FileUtils;
+use zencodex\ComposerMirror\App;
+use zencodex\ComposerMirror\FileUtils;
 use ProgressBar\Manager as ProgressBarManager;
-use zencodex\PackagistCrawler\Log;
+use zencodex\ComposerMirror\Log;
 
 class CrawlerCommand extends Command
 {
@@ -53,7 +59,7 @@ class CrawlerCommand extends Command
 
         // 初始化 producer
         $clientHandler = App::getClientHandler();
-        $stats = $clientHandler->stats();
+        $stats = $config->cloudsync ? $clientHandler->stats() : ['current-jobs-ready' => 0];
         if (intval($stats['current-jobs-ready']) > 0) {
             Log::warn('还有未完成的jobs，继续等待');
             sleep(30);
@@ -283,7 +289,6 @@ class CrawlerCommand extends Command
             }
         }
     }
-
 
     /**
      * 更新 packages.json

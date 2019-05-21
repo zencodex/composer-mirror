@@ -1,11 +1,12 @@
 <?php
-/**
- * Author: ZenCodex <v@yinqisen.cn>
- * Date: 2/28/18
- * Time: 1:05 PM
- */
 
-namespace zencodex\PackagistCrawler;
+/*
+|--------------------------------------------------------------------------
+| 本地文件的相关功能: Hash检测，json/zip 扫描 ...
+|--------------------------------------------------------------------------
+*/
+
+namespace zencodex\ComposerMirror;
 
 use ProgressBar\Manager as ProgressBarManager;
 

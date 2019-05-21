@@ -11,7 +11,7 @@
  * (C) Jesse Donat https://github.com/donatj
  */
 
-namespace zencodex\PackagistCrawler;
+namespace zencodex\ComposerMirror;
 
 class Console {
  

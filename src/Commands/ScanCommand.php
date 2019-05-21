@@ -1,15 +1,14 @@
 <?php
 
-namespace zencodex\PackagistCrawler\Commands;
+namespace zencodex\ComposerMirror\Commands;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use zencodex\PackagistCrawler\FileUtils;
+use zencodex\ComposerMirror\FileUtils;
 
 class ScanCommand extends Command
 {
-
     protected function configure()
     {
         $this

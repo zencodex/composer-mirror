@@ -1,12 +1,12 @@
 <?php
 
-/**
- * Author: ZenCodex <v@yinqisen.cn>
- * Date: 2/28/18
- * Time: 12:54 PM
- */
+/*
+|--------------------------------------------------------------------------
+| Log 日志函数
+|--------------------------------------------------------------------------
+*/
 
-namespace zencodex\PackagistCrawler;
+namespace zencodex\ComposerMirror;
 
 class Log {
 

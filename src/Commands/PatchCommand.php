@@ -1,12 +1,25 @@
 <?php
 
-namespace zencodex\PackagistCrawler\Commands;
+/*
+|--------------------------------------------------------------------------
+| linux ext4 支持的最大子目录数有上限，大约 64000 ~ 65000，目前包的数量已经超过上限
+|--------------------------------------------------------------------------
+|
+| 有三种解决方法，前2种基本不现实。所以自己通过尝试，找到了3 (软连接不计数的方案)
+|
+|   1. 更换没有子文件夹数量限制的文件系统，比如 xfs 
+|   2. 或者更改相关代码，重新编译 ext4 内核
+|   3. 切割大的文件夹，分散不同字母开头的文件。在主文件夹里面使用软连接，软连接并不计数
+|
+*/
+
+namespace zencodex\ComposerMirror\Commands;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use zencodex\PackagistCrawler\App;
-use zencodex\PackagistCrawler\Log;
+use zencodex\ComposerMirror\App;
+use zencodex\ComposerMirror\Log;
 
 class PatchCommand extends Command
 {

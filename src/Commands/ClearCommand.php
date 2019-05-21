@@ -1,16 +1,22 @@
 <?php
 
-namespace zencodex\PackagistCrawler\Commands;
+/*
+|--------------------------------------------------------------------------
+| 清理过期文件，包括远程清理
+|--------------------------------------------------------------------------
+*/
+
+namespace zencodex\ComposerMirror\Commands;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Finder\Finder;
-use zencodex\PackagistCrawler\App;
-use zencodex\PackagistCrawler\Cloud;
-use zencodex\PackagistCrawler\Log;
-use zencodex\PackagistCrawler\Rainbow;
+use zencodex\ComposerMirror\App;
+use zencodex\ComposerMirror\Cloud;
+use zencodex\ComposerMirror\Log;
+use zencodex\ComposerMirror\Rainbow;
 
 class ClearCommand extends Command
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace zencodex\PackagistCrawler;
+namespace zencodex\ComposerMirror;
 
 class InstanceBase
 {

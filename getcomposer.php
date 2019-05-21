@@ -17,7 +17,6 @@ if (file_exists(__DIR__ . '/config.php')) {
 
 $versions = file_get_contents(BASE_URL . '/versions');
 $versions = json_decode($versions, true);
-//var_dump($versions); exit();
 $path = $versions['stable'][0]['path'];
 echo "已解析版本路径： $path \n";
 

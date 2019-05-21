@@ -1,11 +1,12 @@
 <?php
-/**
- * Author: ZenCodex <v@yinqisen.cn>
- * Date: 2/28/18
- * Time: 1:05 PM
- */
 
-namespace zencodex\PackagistCrawler;
+/*
+|--------------------------------------------------------------------------
+| 云端文件的相关功能
+|--------------------------------------------------------------------------
+*/
+
+namespace zencodex\ComposerMirror;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
 use Upyun\Config;

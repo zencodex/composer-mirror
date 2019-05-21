@@ -1,6 +1,6 @@
 <?php
 
-namespace zencodex\PackagistCrawler;
+namespace zencodex\ComposerMirror;
 use Pheanstalk\Pheanstalk;
 
 class App extends InstanceBase
@@ -14,7 +14,7 @@ class App extends InstanceBase
     /** @var $clientHandler beanstalk连接句柄 */
     private $clientHandler;
 
-    /** @var $cloud 远程又拍云 */
+    /** @var $cloud 远程云存储 */
     private $cloud;
 
     /** @var bool $terminated 是否结束 */
@@ -31,12 +31,13 @@ class App extends InstanceBase
         $instance = self::$_instance;
         if ($instance == null) {
             $instance = new static;
-
             $instance->config = require(__DIR__ . '/lib/config.php');
-            $instance->cloud = new Cloud($instance->config);
 
-            $instance->clientHandler = new Pheanstalk('127.0.0.1');
-            $instance->clientHandler->useTube('composer');
+            if ($instance->config->cloudsync) {
+                $instance->cloud = new Cloud($instance->config);
+                $instance->clientHandler = new Pheanstalk('127.0.0.1');
+                $instance->clientHandler->useTube('composer');
+            }
 
             $instance->timestamp = time();
             self::$_instance = $instance;
@@ -45,7 +46,7 @@ class App extends InstanceBase
     }
 
     /**
-     * @return 远程又拍云
+     * @return 远程云存储
      */
     protected function getCloud()
     {

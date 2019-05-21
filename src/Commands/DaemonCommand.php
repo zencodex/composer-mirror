@@ -1,15 +1,21 @@
 <?php
 
-namespace zencodex\PackagistCrawler\Commands;
+/*
+|--------------------------------------------------------------------------
+| 推送 beanstalk 队列中的数据到 云存储
+|--------------------------------------------------------------------------
+*/
+
+namespace zencodex\ComposerMirror\Commands;
 
 use QXS\WorkerPool\ClosureWorker;
 use QXS\WorkerPool\WorkerPool;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use zencodex\PackagistCrawler\App;
-use zencodex\PackagistCrawler\FileUtils;
-use zencodex\PackagistCrawler\Log;
+use zencodex\ComposerMirror\App;
+use zencodex\ComposerMirror\FileUtils;
+use zencodex\ComposerMirror\Log;
 
 class DaemonCommand extends Command
 {

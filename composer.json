@@ -1,10 +1,10 @@
 {
-    "name": "zencodex/packagist-crawler",
-    "description": "build mirror of packagist.org",
-    "license": "CC0-1.0",
+    "name": "zencodex/composer-mirror",
+    "description": "mirror full packages on packagist.org, including json and dist/zip files",
+    "license": "MIT",
     "authors": [
         {
-            "name": "ZenCodex",
+            "name": "扣丁禅师",
             "email": "v@yinqisen.cn"
         }
     ],
@@ -16,25 +16,17 @@
         "ext-json": "*",
         "ext-hash": "*",
         "ext-curl": "*",
-        "ext-PDO": "*",
         "ext-zlib": "*",
-        "ext-pdo_sqlite": "*",
         "symfony/finder": "^4.1",
         "pda/pheanstalk": "^3.1",
         "symfony/console": "^4.1"
     },
     "autoload": {
         "psr-4": {
-            "zencodex\\PackagistCrawler\\": "src/"
+            "zencodex\\ComposerMirror\\": "src/"
         }
     },
-    "bin": [
-        "parallel.php"
-    ],
     "scripts": {
-        "crawl": "php crawler.php",
-        "test": "php check.php",
-        "compress": "tar cjf packagist.tar.bz2 cache/",
-        "sync": "rsync -rvz --include=cache/index.php --include=vendor --exclude-from=.gitignore ./ root@linodejp:/home/zencodex/packagist-crawler/"
+        "sync": "rsync -rvz --include=cache/index.php --include=vendor --exclude-from=.gitignore ./ root@linodejp:/home/zencodex/composer-mirror/"
     }
 }
