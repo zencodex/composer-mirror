@@ -20,16 +20,13 @@
         "symfony/finder": "^4.1",
         "pda/pheanstalk": "^3.1",
         "symfony/console": "^4.1",
-        "zencodex/flysystem-upyun": "@dev"
+        "zencodex/flysystem-upyun": "^1.0"
     },
     "autoload": {
         "psr-4": {
             "ZenCodex\\ComposerMirror\\": "src/"
         }
     },
-    "repositories": [
-        { "type": "path", "url": "../flysystem-upyun" }
-    ],
     "scripts": {
         "sync": "rsync -rvz --include=cache/index.php --include=vendor --exclude-from=.gitignore ./ root@linodejp:/home/zencodex/composer-mirror/"
     }
