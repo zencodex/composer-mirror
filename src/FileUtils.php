@@ -6,7 +6,7 @@
 |--------------------------------------------------------------------------
 */
 
-namespace zencodex\ComposerMirror;
+namespace ZenCodex\ComposerMirror;
 
 use ProgressBar\Manager as ProgressBarManager;
 

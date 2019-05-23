@@ -1,6 +1,6 @@
 <?php
 
-namespace zencodex\ComposerMirror;
+namespace ZenCodex\ComposerMirror;
 use Pheanstalk\Pheanstalk;
 
 class App extends InstanceBase
@@ -23,6 +23,9 @@ class App extends InstanceBase
     /** @var $timestamp 启动时间 */
     public $timestamp;
 
+    /** 是否开启同步到云端 */
+    public $isPush2Cloud = true;
+
     /**
      * @return 单例实例|static
      */
@@ -32,8 +35,9 @@ class App extends InstanceBase
         if ($instance == null) {
             $instance = new static;
             $instance->config = require(__DIR__ . '/lib/config.php');
+            $instance->isPush2Cloud = strpos($instance->config->cloudDisk->adapter, 'NullAdapter') === false;
 
-            if ($instance->config->cloudsync) {
+            if ($instance->isPush2Cloud) {
                 $instance->cloud = new Cloud($instance->config);
                 $instance->clientHandler = new Pheanstalk('127.0.0.1');
                 $instance->clientHandler->useTube('composer');
@@ -77,6 +81,8 @@ class App extends InstanceBase
      */
     protected function pushJob2Task($data, $method='pushOneFile', $delay = 0)
     {
+        if (!$this->isPush2Cloud) return;
+
         $this->clientHandler->put(
             json_encode([
                 'method' => $method,

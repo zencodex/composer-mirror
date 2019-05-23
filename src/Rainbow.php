@@ -6,7 +6,7 @@
 |--------------------------------------------------------------------------
 */
 
-namespace zencodex\ComposerMirror;
+namespace ZenCodex\ComposerMirror;
 use Upyun\Config;
 use Upyun\Upyun;
 
@@ -112,7 +112,15 @@ class Rainbow
             }
         }
     }
-
+ 
+    /**
+     * 处理云端和本地的文件差异的，通常用不到，需要的话可根据实际情况自行修改
+     *
+     * @param [type] $local
+     * @param [type] $dir
+     * @param [type] $files
+     * @return void
+     */
     public function handleCloudFiles($local, $dir, $files)
     {
         $isEmptyFolder = true;

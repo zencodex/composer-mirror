@@ -1,13 +1,13 @@
 <?php
 
-namespace zencodex\ComposerMirror\Commands;
+namespace ZenCodex\ComposerMirror\Commands;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use zencodex\ComposerMirror\App;
-use zencodex\ComposerMirror\Rainbow;
+use ZenCodex\ComposerMirror\App;
+use ZenCodex\ComposerMirror\Rainbow;
 
 class RainbowCommand extends Command
 {

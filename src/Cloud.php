@@ -6,18 +6,19 @@
 |--------------------------------------------------------------------------
 */
 
-namespace zencodex\ComposerMirror;
+namespace ZenCodex\ComposerMirror;
+
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
-use Upyun\Config;
-use Upyun\Upyun;
+use League\Flysystem\Config;
+use League\Flysystem\Filesystem;
+use ZenCodex\ComposerMirror\Support\ClientHandlerPlugin;
 
 class Cloud
 {
     private $config;
-    private $client;
     private $lastUpload = [];
-    private $_cachedCloudFiles;
+    private $_cloudDisks = ['json' => null, 'zip' => null];
 
     const JSON_CACHE_FILE = 'cached.json';
     const DIST_CACHE_FILE = 'cached.dist';
@@ -25,20 +26,28 @@ class Cloud
     public function __construct($config)
     {
         $this->config = $config;
-        $this->client = new Upyun( $this->bucketConfig() );
     }
 
-    private function bucketConfig($ext = 'zip')
+    /**
+     * 根据 $ext (json/zip) 创建对应 bucket 的对象
+     *
+     * @param [type] $ext
+     * @return void
+     */
+    public function cloudDisk($ext = 'json')
     {
-        $bucketConfig = new Config(
-            $this->config->upyun->bucket->$ext,
-            $this->config->upyun->operator,
-            $this->config->upyun->password
-        );
+        if (!$this->_cloudDisks[$ext]) {
+            $cloudConfig = $this->config->cloudDisk->config;
+            $cloudConfig['bucket'] = $this->config->cloudDisk->bucketMap[$ext];
 
-        $bucketConfig->timeout = $this->config->timeout;
-        $bucketConfig->sizeBoundary = 121457280;
-        return $bucketConfig;
+            $adapter = new $this->config->cloudDisk->adapter($cloudConfig);
+            $cloudDisk = new Filesystem($adapter, new Config([ 'disable_asserts' => true]));
+            $cloudDisk->addPlugin(new ClientHandlerPlugin());
+
+            $this->_cloudDisks[$ext] = $cloudDisk;
+        }
+
+        return $this->_cloudDisks[$ext];
     }
 
     private function pickFileInfo($file)
@@ -85,21 +94,18 @@ class Cloud
 
         // fix issue: {"msg":"too many requests of the same uri","code":42900002 }
         // sleep to wait
-        if (isset($this->lastUpload[$file]) && (time() - intval($this->lastUpload[$file]) < 20)) {
+        if (isset($this->lastUpload[$file]) && (time() - intval($this->lastUpload[$file]) < 30)) {
             Log::warn('wait 10s, workaround => too many requests of the same uri');
-            sleep(20);
+            sleep(30);
         }
 
         [$ext, $uri, $tmpfile] = $this->pickFileInfo($file);
         if (empty($tmpfile)) goto __END__;
 
         try {
-            // 上传到又拍云
-            $this->client->setConfig($this->bucketConfig($ext));
-
             $f = fopen($tmpfile, 'rb');
-            $this->client->write($uri, $f);
-//            $this->client->write($uri, file_get_contents($tmpfile));
+            // 根据扩展名指定bucket，上传到又拍云
+            $this->cloudDisk($ext)->writeStream($uri, $f);
             Log::debug('pushOneFile success => '. $file);
             $ret = 1;
         } catch (\Exception $e) {
@@ -124,10 +130,8 @@ class Cloud
         ]];
 
         try {
-            $bucketConfig = $this->bucketConfig('zip');
-            $bucketConfig->processNotifyUrl = 'http://127.0.0.1';
-            $this->client->setConfig($bucketConfig);
-            $result = $this->client->process($tasks, Upyun::$PROCESS_TYPE_SYNC_FILE);
+            $cloudClient = $this->cloudDisk('zip')->getClientHandler(['processNotifyUrl' => 'http://127.0.0.1']);
+            $result = $cloudClient->process($tasks, Upyun::$PROCESS_TYPE_SYNC_FILE);
             Log::info('prefetchDistFile => ' . $zipFile);
         } catch (\Exception $e) {
             Log::error('prefetchDistFile => '. $e->getMessage());
@@ -150,8 +154,7 @@ class Cloud
         }
 
         try {
-            $this->client->setConfig( $this->bucketConfig($ext) );
-            $this->client->delete($uri, true);
+            $this->cloudDisk($ext)->delete($uri);
             Log::info('removeRemoteFile => ' . $file);
             return true;
         } catch (\Exception $e) {
@@ -162,124 +165,12 @@ class Cloud
 
     public function refreshRemoteFile($remoteUrl)
     {
-//        $ext = pathinfo($remoteUrl, PATHINFO_EXTENSION);
-//        $client = new Upyun( $this->bucketConfig() );
         try {
-            $result = $this->client->purge($remoteUrl);
+            $cloudClient = $this->cloudDisk()->getClientHandler();
+            $result = $cloudClient->purge($remoteUrl);
             Log::debug("refreshCdnCache => $remoteUrl \n");
         } catch (\Exception $e) {
             Log::error('refreshCdnCache => '. $e->getMessage());
-        }
-    }
-
-    public function clearCloudJsonFiles()
-    {
-        $this->loadCachedCloudFiles($this->config->dbdir . self::JSON_CACHE_FILE);
-        $this->client->setConfig( $this->bucketConfig('json') );
-        $this->travels(rtrim($this->config->cachedir, '/'), '/');
-        unlink($this->config->distdir . 'cloudfiles.txt');
-    }
-
-    public function clearCloudDistFiles()
-    {
-        $this->loadCachedCloudFiles($this->config->dbdir . self::DIST_CACHE_FILE);
-        $this->client->setConfig( $this->bucketConfig('zip') );
-        $this->travels(rtrim($this->config->distdir, '/'), '/');
-        unlink($this->config->distdir . 'cloudfiles.txt');
-    }
-
-    public function travels($local = '', $dir = '/')
-    {
-        $params = ['X-List-Limit' => 5000];
-
-        if ($dir[ strlen($dir) - 1 ] !== '/') {
-            $dir .= '/';
-        }
-
-        $isEmptyFolder = true;
-        do {
-            try {
-                $res = $this->client->read($dir, null, $params);
-                $isEmptyFolder = $this->handleCloudFiles($local, $dir, $res['files']);
-            } catch (\Exception $e) {
-                Log::error($e->getMessage());
-                break;
-            }
-
-            if (isset($res['iter'])) {
-                $params['X-List-Iter'] = $res['iter'];
-            }
-
-        } while (!$res['is_end']);
-
-        // 删除空文件夹
-        if ($isEmptyFolder) {
-            $localdir = $local . $dir;
-
-            if (is_dir($localdir)) {
-                Log::warn("remote is empty, but local is not => $localdir");
-                @exec("rm -rf $localdir");
-            } else {
-                Log::warn("remove remote empty folder => $dir");
-            }
-
-            try {
-                $this->client->deleteDir($dir);
-            } catch (\Exception $e) {
-                Log::error($e->getMessage());
-            }
-        }
-    }
-
-    public function handleCloudFiles($local, $dir, $files)
-    {
-        $isEmptyFolder = true;
-
-        foreach ($files as $fileObj) {
-            $isEmptyFolder = false;
-            $uri = $dir . $fileObj['name'];
-            if (isset($this->_cachedCloudFiles[$uri])) {
-                Log::warn("skip uri => " . $local . $uri);
-                continue;
-            }
-
-            Log::info("name = {$fileObj['name']}, type = {$fileObj['type']}, uri = " . $local . $uri);
-            // 如果为目录，递归查找
-            if ($fileObj['type'] == 'F') {
-                $this->travels($local, $uri);
-            } else {
-                // composer.phar
-                if (strpos($uri, 'composer.phar') > 0) {
-                    Log::warn("skip composer.phar");
-                    continue;
-                }
-
-                // 判断本地文件, 不存在，删除远程
-                if (!file_exists($local . $uri)) {
-                    Log::warn("local not found, so remove remote file => $uri");
-                    try {
-                        $this->client->delete($uri, true);
-                    } catch (\Exception $e) {
-                        Log::error($e->getMessage());
-                    }
-                }
-            }
-
-            if ($dir === '/') {
-                file_put_contents($local . '/cloudfiles.txt', $uri . PHP_EOL, FILE_APPEND);
-            }
-        }
-
-        return $isEmptyFolder;
-    }
-
-    public function loadCachedCloudFiles($cachedFile)
-    {
-        if (file_exists($cachedFile)) {
-            $cloudfiles = file($cachedFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            foreach ($cloudfiles as $f) {
-                $this->_cachedCloudFiles[$f] = true;
-            }
         }
     }
 }

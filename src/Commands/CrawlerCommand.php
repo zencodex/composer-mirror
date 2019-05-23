@@ -6,7 +6,7 @@
 |--------------------------------------------------------------------------
 */
 
-namespace zencodex\ComposerMirror\Commands;
+namespace ZenCodex\ComposerMirror\Commands;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
@@ -15,10 +15,10 @@ use GuzzleHttp\RequestOptions;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use zencodex\ComposerMirror\App;
-use zencodex\ComposerMirror\FileUtils;
+use ZenCodex\ComposerMirror\App;
+use ZenCodex\ComposerMirror\FileUtils;
 use ProgressBar\Manager as ProgressBarManager;
-use zencodex\ComposerMirror\Log;
+use ZenCodex\ComposerMirror\Log;
 
 class CrawlerCommand extends Command
 {
@@ -39,7 +39,6 @@ class CrawlerCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $config = App::getConfig();
-        $config->cloudsync or Log::warn('NOTE: WOULD NOT SYNC TO CLOUD');
 
         // 检测并生成必要目录
         file_exists($config->cachedir) or mkdir($config->cachedir, 0777, true);
@@ -57,13 +56,17 @@ class CrawlerCommand extends Command
         // 临时 workaround
         @exec('rm -f /tmp/composer_*');
 
-        // 初始化 producer
-        $clientHandler = App::getClientHandler();
-        $stats = $config->cloudsync ? $clientHandler->stats() : ['current-jobs-ready' => 0];
-        if (intval($stats['current-jobs-ready']) > 0) {
-            Log::warn('还有未完成的jobs，继续等待');
-            sleep(30);
-            exit();
+        if (App::getInstance()->isPush2Cloud) {
+            // 初始化 producer
+            $clientHandler = App::getClientHandler();
+            $stats = $clientHandler->stats();
+            if (intval($stats['current-jobs-ready']) > 0) {
+                Log::warn('还有未完成的jobs，继续等待');
+                sleep(30);
+                exit();
+            }
+        } else {
+            Log::warn('NOTE: WOULD NOT SYNC TO CLOUD');
         }
 
         // STEP 1
@@ -130,7 +133,7 @@ class CrawlerCommand extends Command
 //                }
 
                     FileUtils::storeFile($cachename, $data);
-                    $app->getConfig()->cloudsync and $app->pushJob2Task($cachename);
+                    App::pushJob2Task($cachename);
                 }
             } else {
                 // Just update filetime
@@ -234,9 +237,7 @@ class CrawlerCommand extends Command
 //                }
 
                     FileUtils::storeFile($cachefile, (string)$res->getBody());
-                    if ($config->cloudsync) {
-                        App::pushJob2Task($cachefile);
-                    }
+                    App::pushJob2Task($cachefile);
                 },
                 'rejected' => function ($reason, $index) use (&$requests, &$progressBar) {
                     Log::error($requests[$index]->getUri() . ' => failed');
@@ -281,8 +282,7 @@ class CrawlerCommand extends Command
                     $zipFile = $config->distdir . $packageName . '/' . $vMeta['dist']['reference'] . '.zip';
                     if (!file_exists($zipFile)) {
                         $fileUtils->storeFile($zipFile, $vMeta['dist']['url']);
-                        if (!$app->getConfig()->cloudsync) continue;
-                        $app->pushJob2Task($zipFile);
+                        App::pushJob2Task($zipFile);
 //                    $app->getConfig()->isPrefetch ? $app->getCloud()->prefetchDistFile($zipFile) : $app->getCloud()->pushOneFile($zipFile);
                     }
                 }
@@ -310,7 +310,7 @@ class CrawlerCommand extends Command
         file_put_contents($config->cachedir . 'packages.json', json_encode($packages));
         unlink($config->cachedir . 'packages.json.new');
 
-        $app->getConfig()->cloudsync and $app->pushJob2Task($config->cachedir . 'packages.json');
+        App::pushJob2Task($config->cachedir . 'packages.json');
         Log::debug('finished! flushFiles...');
     }
 

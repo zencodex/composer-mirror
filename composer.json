@@ -9,7 +9,7 @@
         }
     ],
     "require": {
-        "upyun/sdk": "dev-master",
+        "upyun/sdk": "^3.3",
         "qxsch/worker-pool": "^1.5",
         "guiguiboy/php-cli-progress-bar": "dev-master",
         "php": ">=5.6",
@@ -19,13 +19,17 @@
         "ext-zlib": "*",
         "symfony/finder": "^4.1",
         "pda/pheanstalk": "^3.1",
-        "symfony/console": "^4.1"
+        "symfony/console": "^4.1",
+        "zencodex/flysystem-upyun": "@dev"
     },
     "autoload": {
         "psr-4": {
-            "zencodex\\ComposerMirror\\": "src/"
+            "ZenCodex\\ComposerMirror\\": "src/"
         }
     },
+    "repositories": [
+        { "type": "path", "url": "../flysystem-upyun" }
+    ],
     "scripts": {
         "sync": "rsync -rvz --include=cache/index.php --include=vendor --exclude-from=.gitignore ./ root@linodejp:/home/zencodex/composer-mirror/"
     }

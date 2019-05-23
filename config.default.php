@@ -37,9 +37,34 @@ return (object)[
     'distUrl' => 'https://dl.laravel-china.org/',
 
     /**
-     * 是否同步到云，本地测试采集时，可先设置为 false
-     */
-    'cloudsync' => true,
+     * cloudDisk: 注意是 object，不是 array，内部的参数是 array
+     * 使用 Flyststem Adapter, 第三方云存储的封装类
+     * 
+     * 使用又拍云: 
+     * 'adapter' => 'ZenCodex\\Support\\Flysystem\\Adapter\\UpyunAdapter';
+     * 先安装扩展包: composer require zencodex/flysystem-upyun
+     * 
+     * 使用七牛云: 
+     * 'adapter' => 'Overtrue\\Flysystem\\Qiniu\\QiniuAdapter';
+     * 先安装扩展包: composer require overtrue/flysystem-qiniu
+     * 
+     * 测试状态，可以使用空适配器:
+     * 'adapter' => 'League\\Flysystem\\Adapter\\NullAdapter';
+     * 
+     * 其余的可这里查找: <https://github.com/thephpleague/flysystem>
+     */ 
+    'cloudDisk' => (object)[
+        'adapter' => 'ZenCodex\\Support\\Flysystem\\Adapter\\UpyunAdapter',
+        'config' => [
+            'operator' => 'composer',
+            'password' => '',
+            'bucket' => '',
+        ],
+        'bucketMap' => [
+            'json' => 'mirror-json',
+            'zip' => 'mirror-dist',
+        ]
+    ],
 
     /**
      * guzzle 采集时的超时时间
@@ -55,15 +80,6 @@ return (object)[
      * 最大并发数，越大采集效率越高
      */
     'maxConnections' => 500,
-
-    'upyun' => (object)[
-        'operator' => 'composer',
-        'password' => '',
-        'bucket' => (object)[
-            'json' => 'mirror-json',
-            'zip' => 'mirror-dist',
-        ],
-    ],
 
     /**
      * isPrefetch：早期建立初始数据源时，利用又拍云的直接下载文件任务接口，可忽略

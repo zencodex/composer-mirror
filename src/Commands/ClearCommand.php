@@ -6,17 +6,17 @@
 |--------------------------------------------------------------------------
 */
 
-namespace zencodex\ComposerMirror\Commands;
+namespace ZenCodex\ComposerMirror\Commands;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Finder\Finder;
-use zencodex\ComposerMirror\App;
-use zencodex\ComposerMirror\Cloud;
-use zencodex\ComposerMirror\Log;
-use zencodex\ComposerMirror\Rainbow;
+use ZenCodex\ComposerMirror\App;
+use ZenCodex\ComposerMirror\Cloud;
+use ZenCodex\ComposerMirror\Log;
+use ZenCodex\ComposerMirror\Rainbow;
 
 class ClearCommand extends Command
 {
@@ -58,7 +58,7 @@ class ClearCommand extends Command
             $realFileName = $f->getRealPath();
             if ($basetime - filemtime($realFileName) > $config->expireMinutes * 60) {
                 // remove remote json file
-                if ($config->cloudsync) {
+                if (App::getInstance()->isPush2Cloud) {
                     $cloud->removeRemoteFile($f);
                 }
 

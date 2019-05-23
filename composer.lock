@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8947433f25f32ed7542c21d468970e9c",
+    "content-hash": "4df4f46eec7d9e6471c80db430b4e30d",
     "packages": [
         {
             "name": "guiguiboy/php-cli-progress-bar",
@@ -254,6 +254,96 @@
                 "url"
             ],
             "time": "2017-03-20T17:10:46+00:00"
+        },
+        {
+            "name": "league/flysystem",
+            "version": "1.0.52",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/thephpleague/flysystem.git",
+                "reference": "c5a5097156387970e6f0ccfcdf03f752856f3391"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/thephpleague/flysystem/zipball/c5a5097156387970e6f0ccfcdf03f752856f3391",
+                "reference": "c5a5097156387970e6f0ccfcdf03f752856f3391",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://dl.laravel-china.org/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "ext-fileinfo": "*",
+                "php": ">=5.5.9"
+            },
+            "conflict": {
+                "league/flysystem-sftp": "<1.0.6"
+            },
+            "require-dev": {
+                "phpspec/phpspec": "^3.4",
+                "phpunit/phpunit": "^5.7.10"
+            },
+            "suggest": {
+                "ext-fileinfo": "Required for MimeType",
+                "ext-ftp": "Allows you to use FTP server storage",
+                "ext-openssl": "Allows you to use FTPS server storage",
+                "league/flysystem-aws-s3-v2": "Allows you to use S3 storage with AWS SDK v2",
+                "league/flysystem-aws-s3-v3": "Allows you to use S3 storage with AWS SDK v3",
+                "league/flysystem-azure": "Allows you to use Windows Azure Blob storage",
+                "league/flysystem-cached-adapter": "Flysystem adapter decorator for metadata caching",
+                "league/flysystem-eventable-filesystem": "Allows you to use EventableFilesystem",
+                "league/flysystem-rackspace": "Allows you to use Rackspace Cloud Files",
+                "league/flysystem-sftp": "Allows you to use SFTP server storage via phpseclib",
+                "league/flysystem-webdav": "Allows you to use WebDAV storage",
+                "league/flysystem-ziparchive": "Allows you to use ZipArchive adapter",
+                "spatie/flysystem-dropbox": "Allows you to use Dropbox storage",
+                "srmklive/flysystem-dropbox-v2": "Allows you to use Dropbox storage for PHP 5 applications"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.1-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "League\\Flysystem\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Frank de Jonge",
+                    "email": "info@frenky.net"
+                }
+            ],
+            "description": "Filesystem abstraction: Many filesystems, one API.",
+            "keywords": [
+                "Cloud Files",
+                "WebDAV",
+                "abstraction",
+                "aws",
+                "cloud",
+                "copy.com",
+                "dropbox",
+                "file systems",
+                "files",
+                "filesystem",
+                "filesystems",
+                "ftp",
+                "rackspace",
+                "remote",
+                "s3",
+                "sftp",
+                "storage"
+            ],
+            "time": "2019-05-20T20:21:14+00:00"
         },
         {
             "name": "pda/pheanstalk",
@@ -625,16 +715,16 @@
         },
         {
             "name": "upyun/sdk",
-            "version": "dev-master",
+            "version": "3.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/upyun/php-sdk.git",
-                "reference": "7c14ad67b16177e0c4e90af8474334ee12ddf192"
+                "reference": "1a2dd5ae31047956c733aef0f764f3a527d30628"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/upyun/php-sdk/zipball/7c14ad67b16177e0c4e90af8474334ee12ddf192",
-                "reference": "7c14ad67b16177e0c4e90af8474334ee12ddf192",
+                "url": "https://api.github.com/repos/upyun/php-sdk/zipball/1a2dd5ae31047956c733aef0f764f3a527d30628",
+                "reference": "1a2dd5ae31047956c733aef0f764f3a527d30628",
                 "shasum": "",
                 "mirrors": [
                     {
@@ -687,15 +777,54 @@
                 "sdk",
                 "upyun"
             ],
-            "time": "2017-12-04T14:16:13+00:00"
+            "time": "2017-11-12T09:17:42+00:00"
+        },
+        {
+            "name": "zencodex/flysystem-upyun",
+            "version": "dev-master",
+            "dist": {
+                "type": "path",
+                "url": "../flysystem-upyun",
+                "reference": "a887e5da43b7203eff609210ea1aa18e3047c29e",
+                "shasum": null
+            },
+            "require": {
+                "league/flysystem": "^1.0",
+                "upyun/sdk": "^3.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "ZenCodex\\Support\\Flysystem\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "扣丁禅师",
+                    "email": "v@yinqisen.cn"
+                }
+            ],
+            "description": "Upyun flysystem adapter",
+            "keywords": [
+                "flysystem",
+                "upyun",
+                "又拍云"
+            ],
+            "support": {
+                "issues": "https://github.com/zencodex/flysystem-upyun/issues",
+                "source": "https://github.com/zencodex/flysystem-upyun"
+            }
         }
     ],
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "upyun/sdk": 20,
-        "guiguiboy/php-cli-progress-bar": 20
+        "guiguiboy/php-cli-progress-bar": 20,
+        "zencodex/flysystem-upyun": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
@@ -704,9 +833,7 @@
         "ext-json": "*",
         "ext-hash": "*",
         "ext-curl": "*",
-        "ext-pdo": "*",
-        "ext-zlib": "*",
-        "ext-pdo_sqlite": "*"
+        "ext-zlib": "*"
     },
     "platform-dev": []
 }
