@@ -59,6 +59,7 @@ return (object)[
             'operator' => 'composer',
             'password' => '',
             'bucket' => '',
+            'uploadType' => 'BLOCK',
         ],
         'bucketMap' => [
             'json' => 'mirror-json',

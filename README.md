@@ -1,6 +1,8 @@
 ## 镜像的安装部署
 
-如果你想独立安装及部署镜像站点，详见[INSTALL.md]
+如果你想独立安装及部署镜像站点，详见 [INSTALL.md](INSTALL.md)
+
+感谢 [Laravel China 社区](https://learnku.com/laravel) 的 summer，是他提出做镜像的建议，还有社区的核心小伙伴们，是他们在早期测试，给了众多的支持 🙏
 
 ## 镜像的使用方法
 

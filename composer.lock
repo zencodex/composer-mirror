@@ -910,16 +910,16 @@
         },
         {
             "name": "zencodex/flysystem-upyun",
-            "version": "v1.0.1",
+            "version": "v1.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zencodex/flysystem-upyun.git",
-                "reference": "6ec3f25f220bb5014773d78c19f965492ee33414"
+                "reference": "977b8f10c6795cc6b85a08fbba040ba889b28b2e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zencodex/flysystem-upyun/zipball/6ec3f25f220bb5014773d78c19f965492ee33414",
-                "reference": "6ec3f25f220bb5014773d78c19f965492ee33414",
+                "url": "https://api.github.com/repos/zencodex/flysystem-upyun/zipball/977b8f10c6795cc6b85a08fbba040ba889b28b2e",
+                "reference": "977b8f10c6795cc6b85a08fbba040ba889b28b2e",
                 "shasum": "",
                 "mirrors": [
                     {
@@ -954,7 +954,7 @@
                 "upyun",
                 "又拍云"
             ],
-            "time": "2019-05-23T11:36:26+00:00"
+            "time": "2019-05-24T00:34:16+00:00"
         }
     ],
     "packages-dev": [],
