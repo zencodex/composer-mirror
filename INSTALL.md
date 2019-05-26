@@ -104,7 +104,7 @@ $ php ./bin/console app:scan
 > 如果使用非又拍云的其他平台，需要注意以下代码，需要自行实现
 
 * ClientHandlerPlugin 需要 Flysystem 的对应 Adapter 有对应接口，本例中只有 zencodex/flysystem-upyun 实现了，其他第三方包，可以参照样例自行实现
-* Cloud::refreshRemoteFile，作用是刷新 CDN 缓存的文件，这个每日有调用频率限制，所以只刷新 package.json 是使用
+* Cloud::refreshRemoteFile，作用是刷新 CDN 缓存的文件，这个每日有调用频率限制，所以只刷新 package.json 时使用
 * Cloud::refreshRemoteFile，如果使用非又拍云的平台，需要替换为自己平台刷新代码。或者参照 `ZenCodex\Support\Flysystem\Adapter\UpyunAdapter` 封装 getClientHandler。
 * Cloud::prefetchDistFile 和 refreshRemoteFile 类似，调用的是云平台特殊接口，无法统一封装在 Flysystem，所以也通过 getClientHandler 处理 
 

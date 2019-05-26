@@ -1,6 +1,14 @@
 ## 镜像的安装部署
 
-如果你想独立安装及部署镜像站点，详见 [INSTALL.md](INSTALL.md)
+ZComposer 全量镜像已经开源了
+
+[![stars](https://img.shields.io/github/stars/zencodex/composer-mirror.svg)](https://github.com/zencodex/composer-mirror)
+[![forks](https://img.shields.io/github/forks/zencodex/composer-mirror.svg)](https://github.com/zencodex/composer-mirror)
+[![build](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/zencodex/composer-mirror)
+[![issues](https://img.shields.io/github/issues/zencodex/composer-mirror.svg)](https://github.com/zencodex/composer-mirror)
+[![MIT](https://img.shields.io/badge/license-MIT-lightgrey.svg)](https://github.com/zencodex/composer-mirror)
+
+如果你想独立安装及部署镜像站点，详见 [INSTALL.md](https://github.com/zencodex/composer-mirror/blob/master/INSTALL.md)
 
 感谢 [Laravel China 社区](https://learnku.com/laravel) 的 summer，是他提出做镜像的建议，还有社区的核心小伙伴们，是他们在早期测试，给了众多的支持 🙏
 
