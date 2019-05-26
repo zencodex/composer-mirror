@@ -21,6 +21,11 @@
             background: #FAFAFA;
         }
 
+        .wrapper .container {
+            padding: 26px 20px;
+            color: #2d2d32;
+        }
+
         .content p {
             font-size: 14px;
             margin-top: 10px;
@@ -103,14 +108,12 @@
 <body>
     <section class="wrap">
         <section class="container content" role="main">
-            <div class="row">
-                <div class="info-header">
-                    <span class="title">镜像最后更新时间：</span>
-                    <span class="release-date"><?php echo $update_at; ?></span>
-                </div>
-                <hr>
-                <?php echo $readme; ?>
+            <div class="info-header">
+                <span class="title">镜像最后更新时间：</span>
+                <span class="release-date"><?php echo $update_at; ?></span>
             </div>
+            <hr>
+            <?php echo $readme; ?>
         </section>
     </section>
     <footer class="wrapper-footer">
