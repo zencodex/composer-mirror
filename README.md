@@ -17,9 +17,16 @@ ZComposer 全量镜像已经开源了
 [![issues](https://img.shields.io/github/issues/zencodex/composer-mirror.svg)](https://github.com/zencodex/composer-mirror)
 [![MIT](https://img.shields.io/badge/license-MIT-lightgrey.svg)](https://github.com/zencodex/composer-mirror)
 
-如果你想独立安装及部署镜像站点，详见 [INSTALL.md](https://github.com/zencodex/composer-mirror/blob/master/INSTALL.md)
+本仓库是 [Composer 中文镜像 / Packagist 中国全量镜像](https://learnku.com/laravel/composer) 的源码，如果你想独立安装及部署镜像站点，详见 [INSTALL.md](https://github.com/zencodex/composer-mirror/blob/master/INSTALL.md) 。
 
-感谢 [Laravel China 社区](https://learnku.com/laravel) 的 summer，是他提出做镜像的建议，还有社区的核心小伙伴们，是他们在早期测试，给了众多的支持 🙏
+目前使用此源码的镜像有：
+
+- [Laravel China 镜像](https://learnku.com/laravel/composer)
+- 长期更新...
+
+> 如果你使用了此源码构建镜像，请修改此项目的 readme 让我们知道，让更多人使用上你的镜像。
+
+感谢 [Laravel China 社区](https://learnku.com/laravel) 的 Summer，是他提出做镜像的建议，还有社区的核心小伙伴们，是他们在早期测试，给了众多的支持 🙏
 
 ## 镜像的使用方法
 
