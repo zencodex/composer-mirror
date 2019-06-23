@@ -21,7 +21,7 @@ ZComposer 全量镜像已经开源了
 
 目前使用此源码的镜像有：
 
-- [Laravel China 镜像](https://learnku.com/laravel/composer)
+- [Laravel China 镜像](https://learnku.com/laravel/composer) - 由 [又拍云赞助](https://www.upyun.com/products/prismcdn?utm_source=laravelchina&utm_medium=banner&utm_campaign=prismcdn&utm_content=0503)
 - 长期更新...
 
 > 如果你使用了此源码构建镜像，请修改此项目的 readme 让我们知道，让更多人使用上你的镜像。
