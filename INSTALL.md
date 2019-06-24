@@ -15,7 +15,7 @@ $ composer install
 
 > 通常根据自己部署的实际环境，修改参数。详细配置说明详见 config.default.php
 
-`cp config.default.php config.php`，修改 config.php 中的如下参
+`cp config.default.php config.php`，修改 config.php 中的如下参数
 
 ```php
     /**
