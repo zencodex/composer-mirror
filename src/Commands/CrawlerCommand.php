@@ -281,8 +281,21 @@ class CrawlerCommand extends Command
                     // 保存 github/bitbucket ... 真实对应下载地址
                     $zipFile = $config->distdir . $packageName . '/' . $vMeta['dist']['reference'] . '.zip';
                     if (!file_exists($zipFile)) {
-                        $fileUtils->storeFile($zipFile, $vMeta['dist']['url']);
-                        App::pushJob2Task($zipFile);
+                        if ($app->isPush2Cloud) {
+                            $fileUtils->storeFile($zipFile, $vMeta['dist']['url']);
+                            App::pushJob2Task($zipFile);
+                        } else {
+                            try {
+                                $handle = fopen($zipFile, 'w');
+                                $client = new Client([
+                                    RequestOptions::SINK => $zipFile,
+                                    RequestOptions::TIMEOUT => App::getInstance()->getConfig()->timeout]
+                                );
+                                $client->get($vMeta['dist']['url']);
+                            } finally {
+                                fclose($handle);
+                            }
+                        }
 //                    $app->getConfig()->isPrefetch ? $app->getCloud()->prefetchDistFile($zipFile) : $app->getCloud()->pushOneFile($zipFile);
                     }
                 }
