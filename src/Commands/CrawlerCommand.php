@@ -22,6 +22,10 @@ use ZenCodex\ComposerMirror\Log;
 
 class CrawlerCommand extends Command
 {
+    const IGNORE_PACKAGES = [
+        'acosf/archersys',
+    ];
+
     protected function configure()
     {
         $this
@@ -172,6 +176,10 @@ class CrawlerCommand extends Command
 
             foreach ($list as $packageName => $provider) {
                 $app->terminated and exit();
+                if (in_array($packageName, self::IGNORE_PACKAGES)) {
+                    Log::warn("Ignore package: $packageName");
+                    continue;
+                }
 
 //            $progressBar->advance();
                 ++$sum;
@@ -288,7 +296,7 @@ class CrawlerCommand extends Command
                             try {
                                 $handle = fopen($zipFile, 'w');
                                 $client = new Client([
-                                    RequestOptions::SINK => $zipFile,
+                                    RequestOptions::SINK => $handle,
                                     RequestOptions::TIMEOUT => App::getInstance()->getConfig()->timeout]
                                 );
                                 $client->get($vMeta['dist']['url']);
