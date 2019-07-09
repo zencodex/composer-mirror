@@ -9,7 +9,7 @@
 
 ## 镜像的安装部署
 
-ZComposer 全量镜像已经开源了，禅师的微信号 zencodex
+ZComposer 全量镜像已经开源了，禅师的微信号 zencodex，可以撩撩
 
 [![stars](https://img.shields.io/github/stars/zencodex/composer-mirror.svg)](https://github.com/zencodex/composer-mirror)
 [![forks](https://img.shields.io/github/forks/zencodex/composer-mirror.svg)](https://github.com/zencodex/composer-mirror)
