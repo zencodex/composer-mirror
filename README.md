@@ -1,116 +1,128 @@
-<p align="center">
-  <br>
-  <b>创造不息，交付不止</b>
-  <br>
-  <a href="http://yousails.mikecrm.com/4Dh5uWU">
-    <img src="https://yousails.com/banners/brand.png" width=350>
-  </a>
-</p>
+## ZComposer 镜像的安装部署
 
-## 镜像的安装部署
+推荐运行主机配置：
 
-ZComposer 全量镜像已经开源了，禅师的微信号 zencodex，可以撩撩
+* [x] 内存最好不低于4G
+* [x] 剩余磁盘空间不低于30G
 
-[![stars](https://img.shields.io/github/stars/zencodex/composer-mirror.svg)](https://github.com/zencodex/composer-mirror)
-[![forks](https://img.shields.io/github/forks/zencodex/composer-mirror.svg)](https://github.com/zencodex/composer-mirror)
-[![build](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/zencodex/composer-mirror)
-[![issues](https://img.shields.io/github/issues/zencodex/composer-mirror.svg)](https://github.com/zencodex/composer-mirror)
-[![MIT](https://img.shields.io/badge/license-MIT-lightgrey.svg)](https://github.com/zencodex/composer-mirror)
-
-本仓库是 [Composer 中文镜像 / Packagist 中国全量镜像](https://learnku.com/laravel/composer) 的源码，如果你想独立安装及部署镜像站点，详见 [INSTALL.md](https://github.com/zencodex/composer-mirror/blob/master/INSTALL.md) 。
-
-目前使用此源码的镜像有：
-
-- [Laravel China 镜像](https://learnku.com/laravel/composer) - 由 [又拍云赞助](https://www.upyun.com/products/prismcdn?utm_source=laravelchina&utm_medium=banner&utm_campaign=prismcdn&utm_content=0503)
-- 长期更新...
-
-> 如果你使用了此源码构建镜像，请修改此项目的 readme 让我们知道，让更多人使用上你的镜像。
-
-感谢 [Laravel China 社区](https://learnku.com/laravel) 的 Summer，是他提出做镜像的建议，还有社区的核心小伙伴们，是他们在早期测试，给了众多的支持 🙏
-
-## 镜像的使用方法
-
-> 请尽可能用比较新的 Composer 版本。
-
-使用 Composer 镜像加速有两种选项：
-
-- 选项一：全局配置，这样所有项目都能惠及（推荐）；
-- 选项二：单独项目配置；
-
-选项一、全局配置（推荐）
-
-```shell
-$ composer config -g repo.packagist composer https://packagist.laravel-china.org
+```sh
+$ apt install beanstalkd
+$ cd composer-mirror
+$ composer install
 ```
 
-选项二、单独使用
+## 修改配置参数
 
-如果仅限当前工程使用镜像，去掉 -g 即可，如下：    
+> 通常根据自己部署的实际环境，修改参数。详细配置说明详见 config.default.php
 
-```shell  
-$ composer config repo.packagist composer https://packagist.laravel-china.org
+`cp config.default.php config.php`，修改 config.php 中的如下参数
+
+```php
+    /**
+     * distdir 用于存储 zip 包
+     */
+    'distdir' => __DIR__ . '/dist/',
+
+    /**
+     * 指向 mirrorUrl 对应的 web 实际目录
+     */
+    'cachedir' => __DIR__ . '/cache/',
+
+    /**
+     * packagistUrl：官方采集源
+     */
+    'packagistUrl' => 'https://packagist.org',
+
+    /**
+     * 镜像包发布站点, packages.json 入口根域名
+     */
+    'mirrorUrl' => 'https://packagist.laravel-china.org',
+
+    /**
+     * .json 中 dist 分发 zip 包的CDN域名
+     */
+    'distUrl' => 'https://dl.laravel-china.org/',
 ```
 
-## 遇到问题？
+### supervisor 配置
 
-`composer` 命令后面加上 -vvv （是3个v）可以打印出调错信息，命令如下：
+`sudo vim /etc/supervisor/supervisord.conf`，添加如下配置信息：
 
-```shell
-$ composer -vvv create-project laravel/laravel blog
-$ composer -vvv require psr/log
+    [program:crawler]
+    command=php ./bin/console app:crawler
+    directory=/home/zencodex/composer-mirror/  ;部署代码的位置，自行替换
+    autostart=true
+    autorestart=true
+    redirect_stderr = true  ; 把 stderr 重定向到 stdout，默认 false
+    stdout_logfile_maxbytes = 10MB  ; stdout 日志文件大小，默认 50MB
+    stdout_logfile_backups = 5      ; stdout 日志文件备份数
+    stdout_logfile = /tmp/composer_crawler_stdout.log
+    
+    [program:composer_daemon]
+    command=php ./bin/console app:daemon
+    directory=/home/zencodex/composer-mirror/  ;部署代码的位置，自行替换
+    autostart=true
+    autorestart=true
+    redirect_stderr = true  ; 把 stderr 重定向到 stdout，默认 false
+    stdout_logfile_maxbytes = 10MB  ; stdout 日志文件大小，默认 50MB
+    stdout_logfile_backups = 5      ; stdout 日志文件备份数
+    stdout_logfile = /tmp/composer_daemon_stdout.log
+
+### crontab 定时任务
+
 ```
-   
-如果自己解决不了，或发现 BUG，可以在 [@扣丁禅师](https://laravel-china.org/users/12063) 的 GitHub 上 [创建 Issue](https://github.com/zencodex/composer/issues/new)。
+# sudo crontab -e
+# 根据自己环境代码的位置，替换 /home/zencodex/composer-mirror 
+# getcomposer 是获取最新的 composer，上传到 CDN 云存储
 
-注意提问时请带上 -vvv 的输出，并且要求叙述清晰，第一次提问的同学请阅读 [关于提问的智慧](https://laravel-china.org/topics/2396/wisdom-of-asking-questions-chinese-version)。
-
-## 常见问题
-
-1. 已存在 composer.lock 文件，先删除，再运行 `composer install` 重新生成。
-> 原因：composer.lock 缓存了之前的配置信息，从而导致新的镜像配置无效。
-
-2. 使用 `laravel new` 命令创建工程， 这个命令会从 [这里](http://cabinet.laravel.com/latest.zip) 下一个zip包，里面自带了 composer.lock，和上面原因一样，也无法使用镜像加速，解决方法：
-
-- 方法一（推荐）：
-不使用 `laravel new`，直接用 `composer create-project laravel/laravel xxx` 新建工程。
-
-- 方法二：
-运行 `laravel new xxx`，当看见屏幕出现 - Installing doctrine/inflector 时，`Ctrl + C` 终止命令，cd xxx 进入，删除 composer.lock，再运行 `composer install`。
-
-3. 缓存多久更新一次？
-
-- 0时 - 早上7时，这个时间段考虑使用人数不会太频繁，间隔为15分钟
-- 其余时间，间隔为5分钟
-
-> 正常更新速度可在1分内完成 ，但更新太快，会降低CDN命中率，如果总有新文件让CDN去缓存，反而拖慢了速度，所以故意加了些延迟。我们每次采集中还会删减掉数千个僵尸包，以加快传输速度。
-
-## 安装 Composer
-
-### Linux/Mac：
-
-    wget https://dl.laravel-china.org/composer.phar -O /usr/local/bin/composer
-	chmod a+x /usr/local/bin/composer
- 
- 如遇权限不足，可添加 `sudo`。
- 
-###  Windows：
-
-1. 直接下载 composer.phar，地址：https://dl.laravel-china.org/composer.phar
-2. 把下载的 composer.phar 放到 PHP 安装目录
-3. 新建 composer.bat, 添加如下内容，并保存：  
-
-<pre>@php "%~dp0composer.phar" %*</pre>
-
-### 查看当前版本
-
-```shell
-$ composer -V
+0 */2 * * * /usr/bin/php /home/zencodex/composer-mirror/bin/console app:clear --expired=json
+0 1 * * * /usr/bin/php /home/zencodex/composer-mirror/getcomposer.php
 ```
 
-### 升级版本
+## 常用命令
 
-```shell
-$ composer selfupdate
+```sh
+# 执行抓取任务
+$ php ./bin/console app:crawler
+
+# 后台多进程模型同步又拍云
+$ php ./bin/console app:daemon
+
+# 清理过期垃圾文件
+$ php ./bin/console app:clear --expired=json
+
+# 扫描并校验所有json和zip文件的hash256
+$ php ./bin/console app:scan
 ```
 
-> 注意 `selfupdate` 升级命令会连接官方服务器，速度很慢。建议直接下载我们的 `composer.phar` 镜像，每天都会更新到最新。
+### For Developers
+
+* 没有使用数据库存储，完全是按目录结构存储
+* 每个包的 dist/zip 文件存储的是对应 github url的下载地址，因磁盘空间有限，不在本地存储，直接推送到云端
+* 清理过期文件，判断是否有更新，是否过期的依据是文件的时间戳，所以不要手动对文件做 touch，或引起时间戳变化的操作
+
+> 如果使用非又拍云的其他平台，需要注意以下代码，需要自行实现
+
+* ClientHandlerPlugin 需要 Flysystem 的对应 Adapter 有对应接口，本例中只有 zencodex/flysystem-upyun 实现了，其他第三方包，可以参照样例自行实现
+* Cloud::refreshRemoteFile，作用是刷新 CDN 缓存的文件，这个每日有调用频率限制，所以只刷新 package.json 时使用
+* Cloud::refreshRemoteFile，如果使用非又拍云的平台，需要替换为自己平台刷新代码。或者参照 `ZenCodex\Support\Flysystem\Adapter\UpyunAdapter` 封装 getClientHandler。
+* Cloud::prefetchDistFile 和 refreshRemoteFile 类似，调用的是云平台特殊接口，无法统一封装在 Flysystem，所以也通过 getClientHandler 处理 
+
+### 注意最大子目录数的坑
+
+代码详情见 `src/Commands/PatchCommand.php`
+
+```php
+/*
+|--------------------------------------------------------------------------
+| linux ext4 支持的最大子目录数有上限，大约 64000 ~ 65000，目前包的数量已经超过上限
+|--------------------------------------------------------------------------
+|
+| 有三种解决方法，前2种基本不现实。所以自己通过尝试，找到了3 (软连接不计数的方案)
+|
+|   1. 更换没有子文件夹数量限制的文件系统，比如 xfs 
+|   2. 或者更改相关代码，重新编译 ext4 内核
+|   3. 切割大的文件夹，分散不同字母开头的文件。在主文件夹里面使用软连接，软连接并不计数
+|
+*/
+```
