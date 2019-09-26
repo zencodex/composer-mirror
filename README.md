@@ -1,3 +1,13 @@
+[![stars](https://img.shields.io/github/stars/zencodex/composer-mirror.svg)](https://github.com/zencodex/composer-mirror)
+[![forks](https://img.shields.io/github/forks/zencodex/composer-mirror.svg)](https://github.com/zencodex/composer-mirror)
+[![build](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/zencodex/composer-mirror)
+[![issues](https://img.shields.io/github/issues/zencodex/composer-mirror.svg)](https://github.com/zencodex/composer-mirror)
+[![MIT](https://img.shields.io/badge/license-MIT-lightgrey.svg)](https://github.com/zencodex/composer-mirror)
+
+> 感谢 Laravel China 社区 的 Summer，提出了做镜像的建议，感谢早期参与测试的小伙伴们，给了众多的支持 🙏
+
+> Laravel China 社区镜像，于 2019 年 9 月 4 号停用。详见：https://learnku.com/articles/30758 ，替代镜像请见 Wiki：[Wiki：Composer 国内加速：可用镜像列表](https://learnku.com/composer/wikis/30594)
+
 ## ZComposer 镜像的安装部署
 
 推荐运行主机配置：
@@ -126,3 +136,14 @@ $ php ./bin/console app:scan
 |
 */
 ```
+
+### 赞助商
+
+<p align="center">
+  <br>
+  <b>创造不息，交付不止</b>
+  <br>
+  <a href="http://yousails.mikecrm.com/4Dh5uWU">
+    <img src="https://yousails.com/banners/brand.png" width=350>
+  </a>
+</p>
