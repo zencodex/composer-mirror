@@ -137,13 +137,4 @@ $ php ./bin/console app:scan
 */
 ```
 
-### 赞助商
-
-<p align="center">
-  <br>
-  <b>创造不息，交付不止</b>
-  <br>
-  <a href="http://yousails.mikecrm.com/4Dh5uWU">
-    <img src="https://yousails.com/banners/brand.png" width=350>
-  </a>
-</p>
+![follow](./cache/follow.png)
