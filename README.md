@@ -136,5 +136,3 @@ $ php ./bin/console app:scan
 |
 */
 ```
-
-![follow](./cache/follow.png)

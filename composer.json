@@ -21,7 +21,8 @@
         "pda/pheanstalk": "^3.1",
         "symfony/console": "^4.1",
         "zencodex/flysystem-upyun": "^1.0",
-        "cebe/markdown": "~1.2.0"
+        "cebe/markdown": "~1.2.0",
+        "league/flysystem": "^1.1"
     },
     "autoload": {
         "psr-4": {
