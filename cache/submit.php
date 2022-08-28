@@ -96,8 +96,7 @@ if (strtolower($accept) == 'application/json') {
         return;
     }
 } else {
-    echo "<h1>提交成功</h1>";
-    return;
+    $isSubmit = true;
 }
 
 static_page:
@@ -246,6 +245,9 @@ static_page:
 <body>
     <div id="wrapper">
         <div id="main">
+<?php
+if (empty($isSubmit)) {
+?>
             <header id="header">
                 <h1>同步扩展包<br><span class="sub">提交需要进行镜像同步的扩展包</span></h1>
             </header>
@@ -254,7 +256,7 @@ static_page:
                     <div class="row mb-3 pt-4">
                         <label for="packages[0]" class="col-sm-2 col-form-label">扩展包</label>
                         <div class="col-sm-10">
-                            <input type="text" class="form-control" id="packages[0]" placeholder="vendor/package">
+                            <input type="text" class="form-control" id="packages[0]" name="packages[0]" placeholder="vendor/package">
                         </div>
                     </div>
 
@@ -263,6 +265,18 @@ static_page:
                     </div>
                 </form>
             </div>
+<?php
+} else {
+?>
+            <div class="d-flex justify-content-center">
+                <div class="container">
+                    <h1>提交成功</h1>
+                    <button type="submit" class="btn btn-success offset-sm-3 mt-5" onclick="window.location.href='/submit.php'">返回</button>
+                </div>
+            </div>
+<?php
+}
+?>
         </div>
     </div>
 </body>
