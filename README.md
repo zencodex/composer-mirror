@@ -67,7 +67,7 @@ $ composer install
     stdout_logfile_maxbytes = 10MB  ; stdout 日志文件大小，默认 50MB
     stdout_logfile_backups = 5      ; stdout 日志文件备份数
     stdout_logfile = /tmp/composer_crawler_stdout.log
-    
+
     [program:composer_daemon]
     command=php ./bin/console app:daemon
     directory=/home/zencodex/composer-mirror/  ;部署代码的位置，自行替换
