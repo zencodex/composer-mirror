@@ -28,11 +28,17 @@ class ClearCommand extends Command
 
         $this
             ->addOption('--expired', null, InputOption::VALUE_OPTIONAL, '清理过期文件', 'json')
-            ->addOption('--diff', null, InputOption::VALUE_NONE, '又拍云反向清理，根据 app:rainbow 缓存的远程文件列表');
+            ->addOption('--diff', null, InputOption::VALUE_NONE, '又拍云反向清理，根据 app:rainbow 缓存的远程文件列表')
+            ->addOption('--all', null, InputOption::VALUE_NONE, '清除 cache 下的文件');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        if ($input->getOption('all')) {
+            $this->clearCacheDir();
+            return;
+        }
+
         if ($input->getOption('diff')) {
             $this->clearCloudDiffFiles();
         } else if ($input->getOption('expired') === 'json') {
@@ -49,7 +55,7 @@ class ClearCommand extends Command
 
         $allFiles = Finder::create()->files()->followLinks()->in($config->cachedir . 'p');
         $packages = json_decode(file_get_contents($config->cachedir . 'packages.json'));
-        $basetime = strtotime($packages->update_at);
+        $basetime = strtotime($packages->update_at ?? time());
 
         foreach ($allFiles as $f) {
             // skip "p/provider-xxx%hash%.json
@@ -125,5 +131,23 @@ class ClearCommand extends Command
         }
 
         Log::warn("$i files removed from cloud");
+    }
+
+    public function clearCacheDir()
+    {
+        $config = App::getConfig();
+
+        $allFiles = Finder::create()->files()->followLinks()->in($config->cachedir);
+
+        $keepFiles = ['index.php', 'submit.php', 'current_sync_packages.php'];
+        foreach ($allFiles as $f) {
+            if (in_array($f->getFilename(), $keepFiles)) {
+                continue;
+            }
+
+            unlink($f->getRealPath());
+        }
+
+        rmdir(rtrim($config->cachedir, '/').'/p');
     }
 }
