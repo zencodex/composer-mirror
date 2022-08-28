@@ -110,7 +110,7 @@
         <section class="container content" role="main">
             <div class="info-header">
                 <span class="title">镜像最后更新时间：</span>
-                <span class="release-date"><?php echo $update_at; ?></span>
+                <span class="release-date"><?php echo $update_at ?? ''; ?></span>
             </div>
             <hr>
             <?php echo $readme; ?>
