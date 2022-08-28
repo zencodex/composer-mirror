@@ -277,7 +277,7 @@ class CrawlerCommand extends Command
                 foreach ($versions as $verNumber => $vMeta) {
                     $app->terminated and exit();
 
-                    // 废弃的包 dist url 为null，跳过不处理
+                    // 废弃的包 dist url 为 null，跳过不处理
                     // bananeapocalypse/nuitinfo2013api
                     // This package is abandoned and no longer maintained. No replacement package was suggested.
 
