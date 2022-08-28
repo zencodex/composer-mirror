@@ -36,13 +36,17 @@ if (in_array($ext, ['zip', 'json'])) {
         $contents = curl_exec($ch);
         curl_close($ch);
 
-        header('Content-Description: File Transfer');
-        header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="'.basename($distUrl).'"');
-        header('Expires: 0');
-        header('Cache-Control: must-revalidate');
-        header('Pragma: public');
-        header('Content-Length: ' . strlen($contents));
+        if ($ext == 'zip') {
+            header('Content-Description: File Transfer');
+            header('Content-Type: application/octet-stream');
+            header('Content-Disposition: attachment; filename="'.basename($distUrl).'"');
+            header('Expires: 0');
+            header('Cache-Control: must-revalidate');
+            header('Pragma: public');
+            header('Content-Length: ' . strlen($contents));
+        } else {
+            header('Content-Type: application/json');
+        }
         echo $contents;
     } catch (\Exception $e) {
         header("HTTP/1.1 301 Moved Permanently");
