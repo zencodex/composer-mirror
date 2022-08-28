@@ -97,6 +97,11 @@ $ composer install
 1. 配置 `https` 访问地址到 `cache/` 目录
 2. 修改 `config.php` 的 `mirrorUrl` 与 `distUrl` 配置。将其改为`访问地址`
 3. 配置重定向 `index.php`
+```
+location / {  
+	try_files $uri $uri/ /index.php$is_args$query_string;  
+}
+```
 
 ## 常用命令
 
