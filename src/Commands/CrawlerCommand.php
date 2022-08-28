@@ -203,7 +203,9 @@ class CrawlerCommand extends Command
 
                 if (file_exists($cachefile)) {
                     FileUtils::touchFile($cachefile, $app->timestamp);
-                    continue;
+                    if (is_dir($config->distdir."/$packageName")) {
+                        continue;
+                    }
                 }
 
                 $packageObjs[] = (object)[

@@ -7,6 +7,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use ZenCodex\ComposerMirror\App;
+use ZenCodex\ComposerMirror\Log;
 use ZenCodex\ComposerMirror\Rainbow;
 
 class RainbowCommand extends Command
@@ -27,6 +28,11 @@ class RainbowCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        if (!App::getInstance()->getClientHandler()) {
+            Log::warn('未启用又拍云配置');
+            return;
+        }
+
         $config = App::getConfig();
         $rainbow = new Rainbow($config);
         $rainbow->mapCloudDistFiles();

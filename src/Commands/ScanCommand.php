@@ -5,6 +5,8 @@ namespace ZenCodex\ComposerMirror\Commands;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use ZenCodex\ComposerMirror\App;
+use ZenCodex\ComposerMirror\Log;
 use ZenCodex\ComposerMirror\FileUtils;
 
 class ScanCommand extends Command
@@ -18,6 +20,11 @@ class ScanCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        if (!App::getInstance()->getClientHandler()) {
+            Log::warn('未启用又拍云配置');
+            return;
+        }
+
         FileUtils::badCountOfAllPackages();
         // FileUtils::badCountOfProviderPackages('packages.json');
     }
