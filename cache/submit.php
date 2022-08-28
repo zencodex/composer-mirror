@@ -254,7 +254,7 @@ static_page:
                     <div class="row mb-3 pt-4">
                         <label for="packages[0]" class="col-sm-2 col-form-label">扩展包</label>
                         <div class="col-sm-10">
-                            <input type="text" class="form-control" id="packages[0]">
+                            <input type="text" class="form-control" id="packages[0]" placeholder="vendor/package">
                         </div>
                     </div>
 
