@@ -21,7 +21,7 @@ $path = $versions['stable'][0]['path'];
 echo "已解析版本路径： $path \n";
 
 if (isset($path)) {
-    // https://getcomposer.org/download/1.4.1/composer.phar
+    // https://getcomposer.org/download/2.4.1/composer.phar
     $downUrl = BASE_URL . $path;
     $writeData = file_get_contents($downUrl);
     echo "$downUrl => 准备上传到CDN \n";

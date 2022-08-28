@@ -56,6 +56,7 @@ class ClearCommand extends Command
             // if (strpos($file, '/p/provider-')) continue;
 
             $realFileName = $f->getRealPath();
+            // default: 2 hour
             if ($basetime - filemtime($realFileName) > $config->expireMinutes * 60) {
                 // remove remote json file
                 if (App::getInstance()->isPush2Cloud) {
@@ -85,6 +86,7 @@ class ClearCommand extends Command
 
         foreach ($allFiles as $f) {
             $realFileName = $f->getRealPath();
+            // default: 2.5 day
             if ($basetime - filemtime($realFileName) > 600) {
                 // remove remote json file
                 if ($config->cloudsync) {
