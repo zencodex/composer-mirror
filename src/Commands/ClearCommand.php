@@ -53,7 +53,7 @@ class ClearCommand extends Command
 
         foreach ($allFiles as $f) {
             // skip "p/provider-xxx%hash%.json
-//        if (strpos($file, '/p/provider-')) continue;
+            // if (strpos($file, '/p/provider-')) continue;
 
             $realFileName = $f->getRealPath();
             if ($basetime - filemtime($realFileName) > $config->expireMinutes * 60) {

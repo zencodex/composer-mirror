@@ -17,9 +17,10 @@ class RainbowCommand extends Command
             ->setName("app:rainbow")
             ->setDescription('遍历云储存的文件，并缓存在本地，用于对比差异');
 
-//        $this
-//            ->addOption('--expired', null, InputOption::VALUE_NONE, '清理过期文件')
-//            ->addOption('--cloud', null, InputOption::VALUE_OPTIONAL, '又拍云反向清理，时间慢，大约2天');
+        // $this
+        //     ->addOption('--expired', null, InputOption::VALUE_NONE, '清理过期文件')
+        //     ->addOption('--cloud', null, InputOption::VALUE_OPTIONAL, '又拍云反向清理，时间慢，大约2天');
+
         $this
             ->addOption('--step', null, InputOption::VALUE_REQUIRED, '', 1);
     }

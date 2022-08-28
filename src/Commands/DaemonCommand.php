@@ -34,21 +34,20 @@ class DaemonCommand extends Command
         $cloud = App::getInstance()->getCloud();
         $this->wp = new WorkerPool();
         $this->wp->setWorkerPoolSize(10)->create(new ClosureWorker (
-
             function ($jobData, $semaphone, $storage) use ($cloud) {
                 $cloud->{$jobData->method}($jobData->data);
             }
         ));
 
-//        $isExit = false;
-//        $signal_handler = function ($signal) use(&$isExit) {
-//            $this->warn("kill signal, please wait for all works done");
-//            $isExit = true;
-//        };
-//
-//        pcntl_signal(SIGINT, $signal_handler);  // Ctrl + C
-//        pcntl_signal(SIGCHLD, $signal_handler);
-//        pcntl_signal(SIGTSTP, $signal_handler);  // Ctrl + Z
+        // $isExit = false;
+        // $signal_handler = function ($signal) use(&$isExit) {
+        //     $this->warn("kill signal, please wait for all works done");
+        //     $isExit = true;
+        // };
+
+        // pcntl_signal(SIGINT, $signal_handler);  // Ctrl + C
+        // pcntl_signal(SIGCHLD, $signal_handler);
+        // pcntl_signal(SIGTSTP, $signal_handler);  // Ctrl + Z
 
         $beanstalk = App::getInstance()->getClientHandler();
         $beanstalk->watch('composer');
@@ -59,7 +58,6 @@ class DaemonCommand extends Command
         Log::info('current-jobs-buried => ' . $stats['current-jobs-buried']);
 
         while (1) {
-
             $job = $beanstalk->reserve(15); // Block until job is available.
             if (!$job) break;
 
@@ -75,7 +73,7 @@ class DaemonCommand extends Command
 
             try {
                 $beanstalk->delete($job);
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 // Noting to do
             }
         }

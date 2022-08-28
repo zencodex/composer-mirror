@@ -19,6 +19,6 @@ class ScanCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         FileUtils::badCountOfAllPackages();
-//        FileUtils::badCountOfProviderPackages('packages.json');
+        // FileUtils::badCountOfProviderPackages('packages.json');
     }
 }
