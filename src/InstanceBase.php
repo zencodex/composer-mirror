@@ -4,6 +4,9 @@ namespace ZenCodex\ComposerMirror;
 
 class InstanceBase
 {
+    /**
+     * @return mixed
+     */
     protected static function getInstance()
     {
         // override, nothing to do here

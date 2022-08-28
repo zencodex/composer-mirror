@@ -73,7 +73,7 @@ class FileUtils extends InstanceBase
      */
     protected function touchFile($file, $timestamp)
     {
-//    checkHashOfFile($file);
+        // checkHashOfFile($file);
         touch($file, $timestamp, $timestamp);
     }
 
@@ -123,7 +123,7 @@ class FileUtils extends InstanceBase
                         // This package is abandoned and no longer maintained. No replacement package was suggested.
 
                         if (!$vMeta['dist']['url']) {
-//                            Log::error('发现异常包，跳过: ' . $vMeta['dist']['url']);
+                            // mLog::error('发现异常包，跳过: ' . $vMeta['dist']['url']);
                             ++$errCount;
                             continue;
                         }

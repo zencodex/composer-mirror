@@ -8,8 +8,8 @@
 
 namespace ZenCodex\ComposerMirror;
 
-class Log {
-
+class Log
+{
     public static function error($str)
     {
         Console::log($str, 'red');

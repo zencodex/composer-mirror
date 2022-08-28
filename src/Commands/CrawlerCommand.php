@@ -103,7 +103,7 @@ class CrawlerCommand extends Command
 
         $packages = json_decode($this->request($config->packagistUrl . '/packages.json'));
         foreach (explode(' ', 'notify notify-batch search') as $k) {
-            if (0 === strpos($packages->$k, '/')) {
+            if (0 === strpos($packages->$k ?? null, '/')) {
                 $packages->$k = $config->packagistUrl . $packages->$k;
             }
         }
@@ -114,7 +114,7 @@ class CrawlerCommand extends Command
         }
 
         $providers = [];
-        $numberOfProviders = count( (array)$packages->{'provider-includes'} );
+        $numberOfProviders = count((array) $packages->{'provider-includes'});
         $progressBar = new ProgressBarManager(0, $numberOfProviders);
         $progressBar->setFormat('Downloading Providers: %current%/%max% [%bar%] %percent%%');
 
@@ -129,12 +129,12 @@ class CrawlerCommand extends Command
             if (!file_exists($cachename)) {
                 $data = $this->request($config->packagistUrl . '/' . $fileurl);
                 if ($data) {
-//                $oldcache = $cachedir . str_replace('%hash%.json', '*', $tpl);
-//                if ($glob = glob($oldcache)) {
-//                    foreach ($glob as $old) {
-//                        $globals->expiredManager->add($old, time());
-//                    }
-//                }
+                    // $oldcache = $cachedir . str_replace('%hash%.json', '*', $tpl);
+                    // if ($glob = glob($oldcache)) {
+                    //     foreach ($glob as $old) {
+                    //         $globals->expiredManager->add($old, time());
+                    //     }
+                    // }
 
                     FileUtils::storeFile($cachename, $data);
                     App::pushJob2Task($cachename);
@@ -169,10 +169,10 @@ class CrawlerCommand extends Command
             if (!$list || empty($list->providers)) continue;
 
             $list = $list->providers;
-//        $all = count((array)$list);
-//        $progressBar = new ProgressBarManager(0, $all);
+            // $all = count((array)$list);
+            // $progressBar = new ProgressBarManager(0, $all);
             echo "   - Provider {$i}/{$numberOfProviders}:\n";
-//        $progressBar->setFormat("      - Package: %current%/%max% [%bar%] %percent%%");
+            // $progressBar->setFormat("      - Package: %current%/%max% [%bar%] %percent%%");
 
             foreach ($list as $packageName => $provider) {
                 $app->terminated and exit();
@@ -181,7 +181,7 @@ class CrawlerCommand extends Command
                     continue;
                 }
 
-//            $progressBar->advance();
+            // $progressBar->advance();
                 ++$sum;
                 $url = "$config->packagistUrl/p/$packageName\$$provider->sha256.json";
                 $cachefile = $cachedir . str_replace("$config->packagistUrl/", '', $url);
@@ -235,14 +235,14 @@ class CrawlerCommand extends Command
                     }
 
                     $cachefile = $cachedir . str_replace("$config->packagistUrl/", '', $req->getUri());
-                    //                $cachefile2 = $cachedir . '/p/' . $req->packageName . '.json';
+                    // $cachefile2 = $cachedir . '/p/' . $req->packageName . '.json';
                     $jsonfiles[] = $cachefile;
 
-//                if ($glob = glob("{$cachedir}p/$req->packageName\$*")) {
-//                    foreach ($glob as $old) {
-//                        $globals->expiredManager->add($old, time());
-//                    }
-//                }
+                    // if ($glob = glob("{$cachedir}p/$req->packageName\$*")) {
+                    //     foreach ($glob as $old) {
+                    //         $globals->expiredManager->add($old, time());
+                    //     }
+                    // }
 
                     FileUtils::storeFile($cachefile, (string)$res->getBody());
                     App::pushJob2Task($cachefile);
@@ -304,7 +304,7 @@ class CrawlerCommand extends Command
                                 fclose($handle);
                             }
                         }
-//                    $app->getConfig()->isPrefetch ? $app->getCloud()->prefetchDistFile($zipFile) : $app->getCloud()->pushOneFile($zipFile);
+                        // $app->getConfig()->isPrefetch ? $app->getCloud()->prefetchDistFile($zipFile) : $app->getCloud()->pushOneFile($zipFile);
                     }
                 }
             }

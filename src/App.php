@@ -20,7 +20,7 @@ class App extends InstanceBase
     /** @var bool $terminated 是否结束 */
     public $terminated = 0;
 
-    /** @var $timestamp 启动时间 */
+    /** @var null|int $timestamp 启动时间 */
     public $timestamp;
 
     /** 是否开启同步到云端 */

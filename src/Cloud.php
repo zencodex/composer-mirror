@@ -8,6 +8,7 @@
 
 namespace ZenCodex\ComposerMirror;
 
+use Upyun\Upyun;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
 use League\Flysystem\Config;
@@ -31,8 +32,8 @@ class Cloud
     /**
      * 根据 $ext (json/zip) 创建对应 bucket 的对象
      *
-     * @param [type] $ext
-     * @return void
+     * @param string $ext
+     * @return mixed
      */
     public function cloudDisk($ext = 'json')
     {
@@ -58,7 +59,7 @@ class Cloud
             $uri = substr($file, $start);
             $postUrl = file_get_contents($file);
 
-            $tmpfile = tempnam(null, 'composer_');
+            $tmpfile = tempnam('', 'composer_');
             try {
                 $downloader = new Client([ RequestOptions::TIMEOUT => $this->config->timeout ]);
                 $downloader->get($postUrl, ['sink' => $tmpfile]);
