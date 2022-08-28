@@ -21,8 +21,6 @@ $ cd composer-mirror
 $ composer install
 ```
 
-配置 `https` 访问地址到 `cache/` 目录
-
 ## 修改配置参数
 
 > 通常根据自己部署的实际环境，修改参数。详细配置说明详见 config.default.php
@@ -90,6 +88,12 @@ $ composer install
 0 */2 * * * /usr/bin/php /home/zencodex/composer-mirror/bin/console app:clear --expired=json
 0 1 * * * /usr/bin/php /home/zencodex/composer-mirror/getcomposer.php
 ```
+
+
+### 配置站点访问
+
+1. 配置 `https` 访问地址到 `cache/` 目录
+2. 修改 `config.php` 的 `mirrorUrl` 与 `distUrl` 配置。将其改为`访问地址`
 
 ## 常用命令
 
