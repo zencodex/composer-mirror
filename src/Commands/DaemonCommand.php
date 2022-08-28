@@ -50,6 +50,11 @@ class DaemonCommand extends Command
         // pcntl_signal(SIGTSTP, $signal_handler);  // Ctrl + Z
 
         $beanstalk = App::getInstance()->getClientHandler();
+        if (!$beanstalk) {
+            Log::warn('未启用又拍云配置，无需同步');
+            return;
+        }
+
         $beanstalk->watch('composer');
 
         $stats = $beanstalk->stats();
