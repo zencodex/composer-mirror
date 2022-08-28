@@ -297,8 +297,8 @@ class CrawlerCommand extends Command
                                 $handle = fopen($zipFile, 'w');
                                 $client = new Client([
                                     RequestOptions::SINK => $handle,
-                                    RequestOptions::TIMEOUT => App::getInstance()->getConfig()->timeout]
-                                );
+                                    RequestOptions::TIMEOUT => App::getInstance()->getConfig()->timeout
+                                ]);
                                 $client->get($vMeta['dist']['url']);
                             } finally {
                                 fclose($handle);
