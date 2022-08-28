@@ -26,6 +26,8 @@ class CrawlerCommand extends Command
         'acosf/archersys',
     ];
 
+    protected $currentSyncPackages = [];
+
     protected function configure()
     {
         $this
@@ -71,6 +73,15 @@ class CrawlerCommand extends Command
             }
         } else {
             Log::warn('NOTE: WOULD NOT SYNC TO CLOUD');
+        }
+
+        $currentSyncPackagesCacheFile = rtrim($config->cachedir, '/')."/current_sync_packages.php";
+        if (file_exists($currentSyncPackagesCacheFile)) {
+            $currentSyncPackages = include $currentSyncPackagesCacheFile;
+
+            if (is_array($currentSyncPackages)) {
+                $this->currentSyncPackages = $currentSyncPackages;
+            }
         }
 
         // STEP 1
@@ -181,7 +192,11 @@ class CrawlerCommand extends Command
                     continue;
                 }
 
-            // $progressBar->advance();
+                if (!in_array($packageName, $this->currentSyncPackages)) {
+                    continue;
+                }
+
+                // $progressBar->advance();
                 ++$sum;
                 $url = "$config->packagistUrl/p/$packageName\$$provider->sha256.json";
                 $cachefile = $cachedir . str_replace("$config->packagistUrl/", '', $url);
