@@ -309,14 +309,23 @@ class CrawlerCommand extends Command
                             App::pushJob2Task($zipFile);
                         } else {
                             try {
+                                $parentDir = dirname($zipFile);
+                                if (!file_exists($parentDir)) {
+                                    mkdir($parentDir, 0755, true);
+                                }
+
                                 $handle = fopen($zipFile, 'w');
                                 $client = new Client([
                                     RequestOptions::SINK => $handle,
                                     RequestOptions::TIMEOUT => App::getInstance()->getConfig()->timeout
                                 ]);
                                 $client->get($vMeta['dist']['url']);
+                            } catch (\Throwable $e) {
+                                Log::error("下载包失败: " . $e->getMessage());
                             } finally {
-                                @fclose($handle);
+                                if (is_resource($handle)) {
+                                    @fclose($handle);
+                                }
                             }
                         }
                         // $app->getConfig()->isPrefetch ? $app->getCloud()->prefetchDistFile($zipFile) : $app->getCloud()->pushOneFile($zipFile);
