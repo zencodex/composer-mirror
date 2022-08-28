@@ -1,5 +1,6 @@
 cache/*
 !cache/index.php
+!cache/submit.php
 dist/
 logs
 vendor
