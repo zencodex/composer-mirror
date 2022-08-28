@@ -19,4 +19,3 @@ putenv("GUZZLE_CURL_SELECT_TIMEOUT=" . $config->timeout);
 
 date_default_timezone_set('PRC');
 Log::debug(sprintf('使用的时区: %s, 当前时间: %s', date_default_timezone_get(), date('Y-m-d H:i:s')));
-
