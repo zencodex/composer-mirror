@@ -1,6 +1,7 @@
 <?php
 
 namespace ZenCodex\ComposerMirror\Support;
+
 use League\Flysystem\Plugin\AbstractPlugin;
 
 /**

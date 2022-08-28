@@ -13,8 +13,8 @@
 
 namespace ZenCodex\ComposerMirror;
 
-class Console {
- 
+class Console
+{
     static $foreground_colors = array(
         'bold'         => '1',    'dim'          => '2',
         'black'        => '0;30', 'dark_gray'    => '1;30',
@@ -34,7 +34,7 @@ class Console {
         'blue'         => '44',   'magenta'      => '45',
         'cyan'         => '46',   'light_gray'   => '47',
     );
- 
+
     static $options = array(
         'underline'    => '4',    'blink'         => '5', 
         'reverse'      => '7',    'hidden'        => '8',
@@ -84,7 +84,7 @@ class Console {
     {
         $string         = $args[0];
         $colored_string = "";
- 
+
         // Check if given foreground color found
         if( isset(self::$foreground_colors[$foreground_color]) ) {
             $colored_string .= "\033[" . self::$foreground_colors[$foreground_color] . "m";
@@ -111,14 +111,14 @@ class Console {
         return $colored_string;
         
     }
- 
+
     /**
      * Plays a bell sound in console (if available)
      * @param  integer $count Bell play count
      * @return string         Bell play string
      */
-    public static function bell($count = 1) {
+    public static function bell($count = 1)
+    {
         echo str_repeat("\007", $count);
     }
- 
 }

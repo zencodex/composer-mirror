@@ -93,5 +93,4 @@ class App extends InstanceBase
             0        // Give the job 1 minute to run.
         );
     }
-
 }
