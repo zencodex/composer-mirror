@@ -21,6 +21,8 @@ $ cd composer-mirror
 $ composer install
 ```
 
+配置 `https` 访问地址到 `cache/` 目录
+
 ## 修改配置参数
 
 > 通常根据自己部署的实际环境，修改参数。详细配置说明详见 config.default.php
