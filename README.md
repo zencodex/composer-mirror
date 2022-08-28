@@ -86,6 +86,8 @@ $ composer install
 # getcomposer 是获取最新的 composer，上传到 CDN 云存储
 
 0 */2 * * * /usr/bin/php /home/zencodex/composer-mirror/bin/console app:clear --expired=json
+
+# 更新 composer.phar 到又拍云
 0 1 * * * /usr/bin/php /home/zencodex/composer-mirror/getcomposer.php
 ```
 
