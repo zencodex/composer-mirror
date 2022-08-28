@@ -367,6 +367,7 @@ class CrawlerCommand extends Command
             ]
         ];
 
+        $packages->info = "";
         $packages->update_at = date('Y-m-d H:i:s', $app->timestamp);
         file_put_contents($config->cachedir . 'packages.json', json_encode($packages));
         unlink($config->cachedir . 'packages.json.new');
