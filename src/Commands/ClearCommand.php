@@ -147,7 +147,5 @@ class ClearCommand extends Command
 
             unlink($f->getRealPath());
         }
-
-        rmdir(rtrim($config->cachedir, '/').'/p');
     }
 }
