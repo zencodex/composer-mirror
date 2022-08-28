@@ -14,39 +14,41 @@ if (file_exists(__DIR__ . '/../config.php')) {
     $config = require __DIR__ . '/../config.default.php';
 }
 
-$input = $_SERVER['QUERY_STRING'];
+$input = $_SERVER['QUERY_STRING'] ?: $_SERVER['REQUEST_URI'];
 $ext = pathinfo($input, PATHINFO_EXTENSION);
 
 $file = ($ext === 'zip' ? $config->distdir : $config->cachedir) . $input;
-if ($ext === 'zip') {
+
+if (in_array($ext, ['zip', 'json'])) {
     if (file_exists($file)) {
         $distUrl = file_get_contents($file);
-        try {
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $distUrl);
-            curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; .NET CLR 1.1.4322)");
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-            $contents = curl_exec($ch);
-            curl_close($ch);
-
-            header('Content-Description: File Transfer');
-            header('Content-Type: application/octet-stream');
-            header('Content-Disposition: attachment; filename="'.basename($distUrl).'"');
-            header('Expires: 0');
-            header('Cache-Control: must-revalidate');
-            header('Pragma: public');
-            header('Content-Length: ' . strlen($contents));
-            echo $contents;
-        } catch (\Exception $e) {
-            header("HTTP/1.1 301 Moved Permanently");
-            header("Location: " . $distUrl);
-        }
-        exit();
     } else {
-        echo 'file not found => ' . $file;
+        $distUrl = rtrim($config->packagistUrl, '/')."/".ltrim($input, '/');
     }
+
+    try {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $distUrl);
+        curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; .NET CLR 1.1.4322)");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+        $contents = curl_exec($ch);
+        curl_close($ch);
+
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="'.basename($distUrl).'"');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . strlen($contents));
+        echo $contents;
+    } catch (\Exception $e) {
+        header("HTTP/1.1 301 Moved Permanently");
+        header("Location: " . $distUrl);
+    }
+    exit();
 } else {
 ?>
 <!doctype html>

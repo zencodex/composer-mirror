@@ -2,6 +2,7 @@ cache/*
 !cache/index.php
 !cache/submit.php
 dist/
+dist2/
 logs
 vendor
 /config.php
