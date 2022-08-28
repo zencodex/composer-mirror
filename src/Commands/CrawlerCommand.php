@@ -200,9 +200,15 @@ class CrawlerCommand extends Command
                 ++$sum;
                 $url = "$config->packagistUrl/p/$packageName\$$provider->sha256.json";
                 $cachefile = $cachedir . str_replace("$config->packagistUrl/", '', $url);
+                // $urlV2 = "$config->packagistUrl/p2/{$packageName}.json";
+                // $cachefileV2 = $cachedir . str_replace("$config->packagistUrl/", '', $urlV2);
 
-                if (file_exists($cachefile)) {
+                if (
+                    file_exists($cachefile)
+                    // && file_exists($cachefileV2)
+                ) {
                     FileUtils::touchFile($cachefile, $app->timestamp);
+                    // FileUtils::touchFile($cachefileV2, $app->timestamp);
                     if (is_dir($config->distdir."/$packageName")) {
                         continue;
                     }
@@ -211,6 +217,7 @@ class CrawlerCommand extends Command
                 $packageObjs[] = (object)[
                     'packageName' => $packageName,
                     'url' => $url,
+                    // 'urlV2' => $urlV2,
                     'sha256' => $provider->sha256,
                 ];
             }
@@ -220,12 +227,12 @@ class CrawlerCommand extends Command
 
         Log::warn("Total packages count = $sum");
         // 开始下载
-        $arrChuncks = array_chunk($packageObjs, $config->maxConnections);
+        $arrChunks = array_chunk($packageObjs, $config->maxConnections);
         $progressBar = new ProgressBarManager(0, count($packageObjs));
         $progressBar->setFormat("   - New Packages: %current%/%max% [%bar%] %percent%%");
         $client = new Client([ RequestOptions::TIMEOUT => $config->timeout]);
 
-        foreach ($arrChuncks as $chunk) {
+        foreach ($arrChunks as $chunk) {
             $requests = [];
             foreach ($chunk as $package) {
                 App::getInstance()->terminated and exit();
@@ -233,7 +240,13 @@ class CrawlerCommand extends Command
                 $req = new Request('GET', $package->url);
                 $req->sha256 = $package->sha256;
                 $req->packageName = $package->packageName;
+
                 $requests[] = $req;
+
+                // $reqV2 = new Request('GET', $package->urlV2);
+                // $reqV2->sha256 = $package->sha256;
+                // $reqV2->packageName = $package->packageName;
+                // $requests[] = $reqV2;
             }
 
             $pool = new Pool($client, $requests, [
@@ -252,8 +265,9 @@ class CrawlerCommand extends Command
                     }
 
                     $cachefile = $cachedir . str_replace("$config->packagistUrl/", '', $req->getUri());
-                    // $cachefile2 = $cachedir . '/p/' . $req->packageName . '.json';
                     $jsonfiles[] = $cachefile;
+                    // $cachefileV2 = $cachedir . '/p2/' . $req->packageName . '.json';
+                    // $jsonfiles[] = $cachefileV2;
 
                     // if ($glob = glob("{$cachedir}p/$req->packageName\$*")) {
                     //     foreach ($glob as $old) {
