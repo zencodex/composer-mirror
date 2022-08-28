@@ -316,7 +316,7 @@ class CrawlerCommand extends Command
                                 ]);
                                 $client->get($vMeta['dist']['url']);
                             } finally {
-                                fclose($handle);
+                                @fclose($handle);
                             }
                         }
                         // $app->getConfig()->isPrefetch ? $app->getCloud()->prefetchDistFile($zipFile) : $app->getCloud()->pushOneFile($zipFile);
